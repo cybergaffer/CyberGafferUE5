@@ -1,0 +1,60 @@
+// Copyright (c) 2023 Exostartup LLC.
+//
+// Distributed under the terms of the MIT License (see the accompanying LICENSE.txt file or get a copy at http://opensource.org/licenses/MIT).
+
+
+#include "/Engine/Private/Common.ush"
+
+TextureCube SourceCubemap;
+SamplerState SourceCubemapSampler;
+
+struct VS_Out {
+	float4 position : SV_POSITION;
+	noperspective float2 UV : TEXCOORD0;
+};
+
+void MainVS(
+	float2 inPosition : ATTRIBUTE0,
+	float2 inUV : ATTRIBUTE1,
+	out VS_Out output
+) {
+	DrawRectangle(float4(inPosition, 0, 1), inUV, output.position, output.UV);
+}
+
+void MainPS(
+	VS_Out input,
+	out float4 outColor : SV_TARGET0
+) {
+	float v = (1 - input.UV.y) * 6;
+	int side = v;
+	v = 1 - v % 1;
+	
+	float2 uv = float2(input.UV.x, v);
+	float3 direction = float3(2 * uv - 1, 1);
+
+	// Unity transformation
+	/*const float3 sides[6] = {
+		direction.zyx * float3(1, 1, -1),	// X+
+		direction.zyx * float3(-1, 1, 1),	// X-
+        
+		direction.xzy * float3(1, 1, -1),	// Y+
+		direction.xzy * float3(1, -1, 1),	// Y-
+        
+		direction,							// Z+
+		direction * float3(-1, 1, -1),		// Z-
+	};*/
+
+	const float3 sides[6] = {
+		direction.zxy * float3(-1, -1, -1),	// X-
+		direction.zxy * float3(1, 1, -1),	// X+
+		
+		direction.yxz * float3(-1, 1, -1),	// Z- 
+		direction.yxz,						// Z+ 
+
+		direction.xzy * float3(1, -1, -1),	// Y-
+		direction.xzy * float3(-1, 1, -1),	// Y+ 
+	};
+	
+	outColor = TextureCubeSample(SourceCubemap, SourceCubemapSampler, sides[side]);
+}
+

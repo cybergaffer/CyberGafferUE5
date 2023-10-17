@@ -1,0 +1,21 @@
+// Copyright (c) 2023 Exostartup LLC.
+//
+// Distributed under the terms of the MIT License (see the accompanying LICENSE.txt file or get a copy at http://opensource.org/licenses/MIT).
+
+
+#include "/Engine/Private/Common.ush"
+
+struct VS_Out {
+	float4 position : SV_POSITION;
+	noperspective float2 UV : TEXCOORD0;
+};
+
+Texture2D SourceTexture;
+SamplerState SourceTextureSampler;
+
+void MainPS(
+	VS_Out input,
+	out float4 outColor : SV_TARGET0
+) {
+	outColor = Texture2DSample(SourceTexture, SourceTextureSampler, input.UV);
+}
