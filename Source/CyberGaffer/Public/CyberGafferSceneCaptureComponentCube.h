@@ -20,13 +20,17 @@ class CYBERGAFFER_API UCyberGafferSceneCaptureComponentCube : public USceneCaptu
 public:
 	UCyberGafferSceneCaptureComponentCube();
 
+	// IP address of machine, where the CyberGaffer server is running.
+	// In case of same machine "127.0.0.1" or "localhost" can be used. 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
 	FString ServerIpAddress = "127.0.0.1";
-	
+
+	// Port of CyberGaffer server
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
 	int32 ServerPort = 8080;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// Should the cubemap be processed and sent to the CyberGaffer server
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CyberGaffer")
 	bool ProcessCubeMap = true;
 
 protected:

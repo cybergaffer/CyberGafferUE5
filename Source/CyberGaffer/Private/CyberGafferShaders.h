@@ -6,10 +6,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GlobalShader.h"
 #include "Shader.h"
 #include "ShaderParameterMacros.h"
 #include "ShaderParameterStruct.h"
+#include "ShaderParameterUtils.h"
+
+#include "SceneView.h"
 
 #include "Serialization/MemoryLayout.h"
 

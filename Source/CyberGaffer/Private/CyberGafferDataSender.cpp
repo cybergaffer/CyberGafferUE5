@@ -5,6 +5,7 @@
 
 #include "CyberGafferDataSender.h"
 
+#include "HAL/RunnableThread.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 
@@ -13,7 +14,6 @@
 
 FCyberGafferDataSender::FCyberGafferDataSender() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::FCyberGafferDataSender"))
-	_thread = FRunnableThread::Create(this, TEXT("CyberGafferDataSenderThread"));
 }
 
 FCyberGafferDataSender::~FCyberGafferDataSender() {
@@ -82,6 +82,10 @@ void FCyberGafferDataSender::SetPackageToSend(FCyberGafferDataPackage package) {
 	FScopeLock lock(&_dataMutex);
 	
 	_packageToSend = MoveTemp(package);
+
+	if (_thread == nullptr && !_exitRequested) {
+		CreateThread();
+	}
 	
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SetData: complete"));
 }
@@ -111,4 +115,16 @@ TFuture<EHttpStatusCode> FCyberGafferDataSender::SendData() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SendData: sending complete, wait for server response"));
 
 	return resultPromise->GetFuture();
+}
+
+void FCyberGafferDataSender::CreateThread() {
+	FScopeLock lock(&_threadMutex);
+
+	if (_thread != nullptr) {
+		CYBERGAFFER_LOG(Error, TEXT("FCyberGafferDataSender::CreateThread: thread already initialized"));
+		return;
+	}
+	
+	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::CreateThread"))
+	_thread = FRunnableThread::Create(this, TEXT("CyberGafferDataSenderThread"));
 }

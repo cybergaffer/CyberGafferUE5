@@ -6,6 +6,7 @@
 #include "CyberGafferSceneCaptureComponentCube.h"
 
 #include "Engine/TextureRenderTargetCube.h"
+#include "Engine/Engine.h"
 
 #include "CyberGafferLog.h"
 

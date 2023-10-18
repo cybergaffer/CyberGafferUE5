@@ -7,6 +7,7 @@
 
 #include "CommonRenderResources.h"
 #include "RHICommandList.h"
+#include "RHIStaticStates.h"
 #include "Engine/TextureRenderTargetCube.h"
 #include "Rendering/Texture2DResource.h"
 #include "PixelFormat.h"

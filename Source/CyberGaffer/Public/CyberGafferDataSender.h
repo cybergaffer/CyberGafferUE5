@@ -102,10 +102,13 @@ public:
 
 private:
     std::atomic_bool _exitRequested = false;
-	FRunnableThread* _thread;
+	FRunnableThread* _thread = nullptr;
 
 	FCriticalSection _dataMutex;
+	FCriticalSection _threadMutex;
 	FCyberGafferDataPackage _packageToSend;
 	
 	TFuture<EHttpStatusCode> SendData();
+
+	void CreateThread();
 };

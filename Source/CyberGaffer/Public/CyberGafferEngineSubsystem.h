@@ -8,7 +8,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/EngineSubsystem.h"
 
-#include "Engine/TextureRenderTarget2D.h"
+#include "Engine/TextureRenderTargetCube.h"
 #include "Templates/SharedPointer.h"
 #include "RHIResources.h"
 

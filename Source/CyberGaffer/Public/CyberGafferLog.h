@@ -17,7 +17,7 @@ DECLARE_LOG_CATEGORY_EXTERN(CyberGafferLog, Log, All);
 #define CYBERGAFFER_LOG(verbosity, message, ...)
 #endif
 
-#define CYBERGAFFERLOG_VERBOSE
+// #define CYBERGAFFERLOG_VERBOSE
 
 #ifdef CYBERGAFFERLOG_VERBOSE
 #define CYBERGAFFERVERB_LOG(verbosity, message, ...) UE_LOG(CyberGafferLog, verbosity, message, ##__VA_ARGS__)
