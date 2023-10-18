@@ -7,21 +7,29 @@
 
 #include "Engine/TextureRenderTargetCube.h"
 #include "Engine/Engine.h"
+#include "Engine/Texture.h"
+#include "Engine/TextureDefines.h"
+#include "Math/UnrealMathUtility.h"
+#include "PixelFormat.h"
 
 #include "CyberGafferLog.h"
 
 // Sets default values for this component's properties
 UCyberGafferSceneCaptureComponentCube::UCyberGafferSceneCaptureComponentCube() {
 	PrimaryComponentTick.bCanEverTick = true;
+
+	// TODO: find a way to mark this properties uneditable. Using the ClearPropertyFlags(CPF_Edit) will change the parent class as well. 
+	bCaptureRotation = true;
+	bCaptureEveryFrame = true;
+	CaptureSource = SCS_FinalColorHDR;
 }
 
 void UCyberGafferSceneCaptureComponentCube::BeginPlay() {
-	Super::BeginPlay();	
-	InitializeSubsystem();
-}
+	Super::BeginPlay();
 
-void UCyberGafferSceneCaptureComponentCube::TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) {
-	Super::TickComponent(deltaTime, tickType, thisTickFunction);
+	CheckTextureTarget();
+	
+	InitializeSubsystem();
 }
 
 void UCyberGafferSceneCaptureComponentCube::UpdateSceneCaptureContents(FSceneInterface* scene) {
@@ -58,5 +66,77 @@ bool UCyberGafferSceneCaptureComponentCube::InitializeSubsystem() {
 
 	_subsystem = GEngine->GetEngineSubsystem<UCyberGafferEngineSubsystem>();
 	return _subsystem != nullptr;
+}
+
+#if WITH_EDITOR
+void UCyberGafferSceneCaptureComponentCube::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) {
+	Super::PostEditChangeProperty(propertyChangedEvent);
+	
+	const FName memberPropertyName = (propertyChangedEvent.MemberProperty != NULL) ? propertyChangedEvent.MemberProperty->GetFName() : NAME_None;
+	
+	if (memberPropertyName.IsEqual("TextureTarget")) {
+		CheckTextureTarget();
+		return;
+	}
+
+	if (memberPropertyName.IsEqual("CaptureSource")) {
+		if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
+			CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
+			CaptureSource = SCS_FinalColorHDR;
+		}
+		return;
+	}
+
+	if (memberPropertyName.IsEqual("bCaptureRotation")) {
+		if (!bCaptureRotation) {
+			CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::PostEditChangeProperty: Capture Rotation must be on, fixing it"));
+			bCaptureRotation = true;
+		}
+	}
+}
+#endif
+
+void UCyberGafferSceneCaptureComponentCube::CheckTextureTarget() {
+	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponentCube::CheckTextureTarget"));
+	
+	if (TextureTarget == nullptr) {
+		return;
+	}
+
+	bool textureUpdated = false;
+
+	if (!TextureTarget->bHDR) {
+		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::CheckTextureTarget: TextureRenderTargetCube must have bHDR property on, fixing it"));
+		TextureTarget->bHDR = true;
+		textureUpdated = true;
+	}
+
+	auto sizeX = TextureTarget->SizeX;
+	if (!FMath::IsPowerOfTwo(sizeX)) {
+		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::CheckTextureTarget: TextureRenderTargetCube size must be power of 2, fixing it"));
+		sizeX = FMath::RoundUpToPowerOfTwo(sizeX);
+		textureUpdated = true;
+		TextureTarget->SizeX = sizeX;
+	}
+
+	auto format = TextureTarget->GetFormat();
+	if (format != PF_FloatRGBA) {
+		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::CheckTextureTarget: TextureRenderTargetCube format must be RGBA16F, fixing it"));
+		format = PF_FloatRGBA;
+		textureUpdated = true;
+	}
+
+	const auto compressionSettings = TextureTarget->CompressionSettings;
+	if (compressionSettings.GetValue() != TC_HDR) {
+		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::CheckTextureTarget: TextureRenderTargetCube compression settings must be HDR (RGBA16F), fixing it"));
+		TextureTarget->CompressionSettings = TC_HDR;
+		textureUpdated = true;
+	}
+
+	if (textureUpdated) {
+		TextureTarget->ReleaseResource();
+		TextureTarget->Init(sizeX, format);
+		TextureTarget->UpdateResourceImmediate(true);
+	}
 }
 

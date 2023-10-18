@@ -37,12 +37,17 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	virtual void TickComponent(float deltaTime, ELevelTick tickType, FActorComponentTickFunction* thisTickFunction) override;
 	virtual void UpdateSceneCaptureContents(FSceneInterface* scene) override;
+
+#if WITH_EDITOR
+	void PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) override;
+#endif
+	
 
 private:
 	UPROPERTY()
 	UCyberGafferEngineSubsystem* _subsystem = nullptr;
 
 	bool InitializeSubsystem();
+	void CheckTextureTarget();
 };
