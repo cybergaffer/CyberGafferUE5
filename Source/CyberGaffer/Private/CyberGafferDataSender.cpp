@@ -106,7 +106,11 @@ TFuture<EHttpStatusCode> FCyberGafferDataSender::SendData() {
 
 	auto resultPromise = MakeShared<TPromise<EHttpStatusCode>>();
 	request->OnProcessRequestComplete().BindLambda([resultPromise](FHttpRequestPtr request, FHttpResponsePtr response, bool succeeded)	{
-		resultPromise->EmplaceValue(static_cast<EHttpStatusCode>(response->GetResponseCode()));
+		if (response != nullptr) {
+			resultPromise->EmplaceValue(static_cast<EHttpStatusCode>(response->GetResponseCode()));
+		} else {
+			resultPromise->EmplaceValue(EHttpStatusCode::BadRequest);
+		}
 	});
 	
 	const auto result = request->ProcessRequest();
