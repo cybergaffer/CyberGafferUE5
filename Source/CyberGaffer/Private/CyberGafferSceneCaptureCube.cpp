@@ -1,4 +1,7 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright (c) 2023 ALT LLC.
+//
+// Distributed under the terms of the MIT License (see the accompanying LICENSE.txt file or get a copy at http://opensource.org/licenses/MIT).
+
 
 #include "CyberGafferSceneCaptureCube.h"
 #include "CyberGafferSceneCaptureComponentCube.h"

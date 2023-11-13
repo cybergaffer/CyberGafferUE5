@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Exostartup LLC.
+// Copyright (c) 2023 ALT LLC.
 //
 // Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt or copy at http://opensource.org/licenses/MIT)
 
