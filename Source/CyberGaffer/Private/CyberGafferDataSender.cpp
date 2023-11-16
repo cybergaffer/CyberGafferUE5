@@ -41,8 +41,8 @@ uint32 FCyberGafferDataSender::Run() {
 				lock.Unlock();
 
 				// TODO: Replace Wait() with WaitFor()
-				// futureResult.WaitFor(FTimespan(0, 0, 2));
-				futureResult.Wait();
+				 futureResult.WaitFor(FTimespan(0, 0, 2));
+				//futureResult.Wait();
 
 				if (futureResult.IsReady()) {
 					const auto result = futureResult.Get();
@@ -56,11 +56,11 @@ uint32 FCyberGafferDataSender::Run() {
 					CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: future is not ready"));
 				}
 			} else {
-				CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: nothing to send"));
+				//CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: nothing to send"));
 			}
 		}
 		// TODO: added to avoid spamming the server in dev state. Should be removed in future.  
-		FPlatformProcess::Sleep(1.0f);
+		//FPlatformProcess::Sleep(1.0f);
 	}
 	
 	CYBERGAFFERVERB_LOG(Warning, TEXT("FCyberGafferDataSender::Run: thread is destroyed"));
