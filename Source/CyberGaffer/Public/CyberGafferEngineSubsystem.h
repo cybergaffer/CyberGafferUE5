@@ -31,6 +31,7 @@ public:
 	// Should be called right after the scene capture component added his task to the render queue,
 	// so the texture processing will be started with minimal delay after the texture is ready.
 	void OnUpdateSceneCaptureContentsEnqueued(const FString serverIp, const uint32_t port, UTextureRenderTargetCube* texture);
+	void OnUpdateSceneCaptureContentsEnqueued(FString serverIp, uint32_t port, UTextureRenderTarget2D* texture);
 
 private:
 	TSharedRef<FCyberGafferDataSender> _dataSender = MakeShared<FCyberGafferDataSender>();

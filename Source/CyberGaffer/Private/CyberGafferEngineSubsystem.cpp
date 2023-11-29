@@ -15,6 +15,7 @@
 #include "CyberGafferDataPackage.h"
 #include "CyberGafferShaders.h"
 #include "CyberGafferLog.h"
+#include "Engine/TextureRenderTarget2D.h"
 
 // The side size of the cubemap, that will be sent to the server
 static constexpr uint8 TargetMipSize = 64;
@@ -216,3 +217,34 @@ void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FSt
 	);
 }
 
+
+void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FString serverIp, const uint32_t port, UTextureRenderTarget2D* texture) {
+	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued"));
+	
+	auto dataSender = _dataSender;
+
+	ENQUEUE_RENDER_COMMAND(HDRI2REALITY_ProcessEnvironment)(
+		[texture, dataSender, serverIp, port](FRHICommandListImmediate& rhiCmdList)
+		{
+			auto textureRHI = texture->GetResource() ? texture->GetResource()->TextureRHI : nullptr;
+			
+			if (textureRHI == nullptr) {				CYBERGAFFER_LOG(Error, TEXT("UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued: invalid UTextureRenderTarget2D texture"));
+				return;
+			}
+
+			auto sideSize = textureRHI->GetDesc().GetSize().X;
+			check(FMath::IsPowerOfTwo(sideSize));
+
+			// Read target mip level and put it's data to the sender
+			FReadSurfaceDataFlags flags = {};
+			flags.SetMip(0);
+			flags.SetLinearToGamma(false);
+
+			TArray<FFloat16Color> data;
+			FIntRect rect(0, 0, 128, 128); //With target mip size.
+			rhiCmdList.ReadSurfaceFloatData(textureRHI, rect, data, flags);
+
+			dataSender->SetPackageToSend(FCyberGafferDataPackage(serverIp, port, data));
+		}
+	);
+}
