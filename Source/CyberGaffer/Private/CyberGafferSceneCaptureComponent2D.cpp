@@ -39,12 +39,11 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings"));
 
-	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Orthographic)
+	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective)
 	{
-		ProjectionType = ECameraProjectionMode::Type::Orthographic;
+		ProjectionType = ECameraProjectionMode::Type::Perspective;
 	}
-
-	OrthoWidth = 100;
+	
 	PostProcessSettings = {};
 
 	PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
@@ -55,6 +54,19 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+	
+	double distanceToSphere = 300 * GetComponentScale().X;
+	double radiusSphere = 5 * GetComponentScale().X;
+	
+	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
+	bOverride_CustomNearClippingPlane = true;
+	CustomNearClippingPlane = (distanceToSphere - radiusSphere);
+
+	ShowFlags.Bloom = false;
+	ShowFlags.EyeAdaptation = false;
+	ShowFlags.LocalExposure = false;
+	ShowFlags.MotionBlur = false;
+	ShowFlags.ToneCurve = false;
 }
 
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
@@ -124,7 +136,7 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 		return;
 	}
 
-	CheckCaptureSettings();
+	//CheckCaptureSettings();
 
 	if (memberPropertyName.IsEqual("CaptureSource")) {
 		if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
@@ -138,6 +150,8 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 
 void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInterface* scene) {
 
+	CheckCaptureSettings();
+	
 	if (TextureTarget == nullptr) {
 		return;
 	}
@@ -163,6 +177,6 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 void UCyberGafferSceneCaptureComponent2D::PostEditComponentMove(bool bFinished)
 {
 	Super::PostEditComponentMove(bFinished);
-	CYBERGAFFER_LOG(Log, TEXT("PostEditComponentMove"));
+	//CYBERGAFFER_LOG(Log, TEXT("PostEditComponentMove"));
 }
 #endif

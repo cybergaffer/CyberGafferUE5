@@ -5,10 +5,6 @@
 
 #include "CyberGafferSceneCapture.h"
 #include "CyberGafferSceneCaptureComponent2D.h"
-#include "MaterialDomain.h"
-#include "AssetRegistry/AssetRegistryModule.h"
-#include "Interfaces/IPluginManager.h"
-#include "Materials/MaterialExpressionConstant3Vector.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -18,8 +14,9 @@ ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& obj
 	_cyberGafferSceneCaptureComponent2D = CreateDefaultSubobject<UCyberGafferSceneCaptureComponent2D>(TEXT("NewCyberGafferSceneCaptureComponent2D"));
 	_cyberGafferSceneCaptureComponent2D->SetupAttachment(RootComponent);
 
-	FVector capturePosition = {-240,0,0};
+	FVector capturePosition = {-300,0,0};
 	FVector spherePosition = {0,0,0};
+	FVector sphereScale {0.1f,0.1f,0.1f};
 	
 	_cyberGafferSceneCaptureComponent2D->SetRelativeLocation(capturePosition);
 
@@ -33,12 +30,16 @@ ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& obj
 	_taskSphere->SetStaticMesh(SphereMeshAsset.Object);
 	_taskSphere->SetVisibleInSceneCaptureOnly(true);
 	_taskSphere->SetRelativeLocation(spherePosition);
+	_taskSphere->SetWorldScale3D(sphereScale);
+	_taskSphere->CastShadow = false;
 	
 	_gizmoSphere = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GizmoSphere"));
 	_gizmoSphere->SetupAttachment(RootComponent);
 	_gizmoSphere->SetStaticMesh(SphereMeshAsset.Object);
 	_gizmoSphere->SetOnlyOwnerSee(true);
 	_gizmoSphere->SetRelativeLocation(spherePosition);
+	_gizmoSphere->SetWorldScale3D(sphereScale);
+	_gizmoSphere->CastShadow = false;
 }
 
 void ACyberGafferSceneCapture::BeginPlay()
@@ -54,13 +55,6 @@ void ACyberGafferSceneCapture::OnInterpToggle(bool bEnable) {
 
 void ACyberGafferSceneCapture::PostActorCreated()
 {
-	//UMaterialInstanceDynamic* sphereMaterial = UMaterialInstanceDynamic::Create(BaseSphereMaterial, this, "CyberGafferSphereMaterial");
-	//sphereMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);
-	//sphereMaterial->SetVectorParameterValue(TEXT("EmissiveColor"), FLinearColor::Black);
-
-	
-	//BaseSphereMaterial->Parent = nullptr;
-	
 	_taskSphere->SetMaterial(0, BaseSphereMaterial);
 	_gizmoSphere->SetMaterial(0, BaseSphereMaterial);
 	
