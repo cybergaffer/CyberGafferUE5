@@ -67,6 +67,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	ShowFlags.LocalExposure = false;
 	ShowFlags.MotionBlur = false;
 	ShowFlags.ToneCurve = false;
+	ShowFlags.Landscape = true;
 }
 
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
