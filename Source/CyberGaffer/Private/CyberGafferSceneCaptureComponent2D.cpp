@@ -21,17 +21,18 @@ UCyberGafferSceneCaptureComponent2D::UCyberGafferSceneCaptureComponent2D() {
 	bCaptureEveryFrame = true;
 	CaptureSource = SCS_FinalColorHDR;
 
-	FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
-	TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
-	
+	//FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
+	//TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
+
+	CheckTextureTarget();
 	CheckCaptureSettings();
 }
 
 void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
 	Super::BeginPlay();
 
-	CheckCaptureSettings();
 	CheckTextureTarget();
+	CheckCaptureSettings();
 	InitializeSubsystem();
 }
 
@@ -73,11 +74,11 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
-
+	
 	if (TextureTarget == nullptr) {
-		return;
+		TextureTarget = NewObject<UTextureRenderTarget2D>(this, "TaskRender");
 	}
-
+	
 	bool textureUpdated = false;
 
 	if (!TextureTarget->bHDR_DEPRECATED) {
@@ -86,12 +87,13 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 		textureUpdated = true;
 	}
 
-	auto sizeX = TextureTarget->SizeX;
-	if (!FMath::IsPowerOfTwo(sizeX)) {
+	auto targetSize = 128 * (uint8)SuperSampling;
+	
+	if (TextureTarget->SizeX != TextureTarget->SizeY || TextureTarget->SizeX != targetSize) {
 		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget: TextureRenderTargetCube size must be power of 2, fixing it"));
-		sizeX = FMath::RoundUpToPowerOfTwo(sizeX);
 		textureUpdated = true;
-		TextureTarget->SizeX = sizeX;
+		TextureTarget->SizeX = targetSize;
+		TextureTarget->SizeY = targetSize;
 	}
 
 	auto format = TextureTarget->GetFormat();
@@ -110,7 +112,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 
 	if (textureUpdated) {
 		TextureTarget->ReleaseResource();
-		TextureTarget->InitCustomFormat(sizeX,sizeX, format, true);
+		TextureTarget->InitCustomFormat(targetSize,targetSize, format, true);
 		TextureTarget->UpdateResourceImmediate(true);
 	}
 }
@@ -132,12 +134,8 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 	
 	const FName memberPropertyName = (propertyChangedEvent.MemberProperty != NULL) ? propertyChangedEvent.MemberProperty->GetFName() : NAME_None;
 	
-	if (memberPropertyName.IsEqual("TextureTarget")) {
-		CheckTextureTarget();
-		return;
-	}
-
-	//CheckCaptureSettings();
+	CheckTextureTarget();
+	CheckCaptureSettings();
 
 	if (memberPropertyName.IsEqual("CaptureSource")) {
 		if (CaptureSource.GetValue() != SCS_FinalColorHDR) {

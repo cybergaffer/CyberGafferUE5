@@ -4,6 +4,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 
 #include "CyberGafferEngineSubsystem.h"
+#include "CyberGafferSuperSampling.h"
 
 #include "CyberGafferSceneCaptureComponent2D.generated.h"
 
@@ -22,6 +23,10 @@ public:
 	// Port of CyberGaffer server
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
 	int32 ServerPort = 8080;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
+	ECyberGafferSuperSampling SuperSampling = ECyberGafferSuperSampling::x64;
+	
 	UCyberGafferEngineSubsystem* _subsystem;
 
 	// Should the cubemap be processed and sent to the CyberGaffer server
