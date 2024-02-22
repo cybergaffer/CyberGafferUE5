@@ -26,6 +26,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
 	ECyberGafferSuperSampling SuperSampling = ECyberGafferSuperSampling::x64;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
+	bool OverrideSceneCaptureParameters = true;
 	
 	UCyberGafferEngineSubsystem* _subsystem;
 

@@ -1,16 +1,11 @@
 #include "CyberGafferSceneCaptureComponent2D.h"
-
-#include "Engine/TextureRenderTargetCube.h"
 #include "Engine/Engine.h"
 #include "Engine/Texture.h"
 #include "Engine/TextureDefines.h"
 #include "Math/UnrealMathUtility.h"
 #include "PixelFormat.h"
-
 #include "CyberGafferLog.h"
-#include "LumenVisualizationData.h"
 #include "Engine/TextureRenderTarget2D.h"
-
 #include "PrimitiveSceneProxy.h"
 #include "SceneManagement.h"
 
@@ -20,9 +15,6 @@ UCyberGafferSceneCaptureComponent2D::UCyberGafferSceneCaptureComponent2D() {
 	// TODO: find a way to mark this properties uneditable. Using the ClearPropertyFlags(CPF_Edit) will change the parent class as well. 
 	bCaptureEveryFrame = true;
 	CaptureSource = SCS_FinalColorHDR;
-
-	//FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
-	//TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
 
 	CheckTextureTarget();
 	CheckCaptureSettings();
@@ -38,6 +30,11 @@ void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
 
 void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 {
+	if(!OverrideSceneCaptureParameters)
+	{
+		return;
+	}
+	
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings"));
 
 	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective)
@@ -51,10 +48,14 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
 	
 	PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
-	PostProcessSettings.LumenSurfaceCacheResolution= 1;
+	PostProcessSettings.LumenSurfaceCacheResolution = 1;
 
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+	
+	PostProcessSettings.bOverride_LumenRayLightingMode = true;
+	PostProcessSettings.LumenRayLightingMode = ELumenRayLightingModeOverride::SurfaceCache;
+	
 	
 	double distanceToSphere = 300 * GetComponentScale().X;
 	double radiusSphere = 5 * GetComponentScale().X;
@@ -69,6 +70,11 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	ShowFlags.MotionBlur = false;
 	ShowFlags.ToneCurve = false;
 	ShowFlags.Landscape = true;
+
+	if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
+		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
+		CaptureSource = SCS_FinalColorHDR;
+	}
 }
 
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
@@ -76,7 +82,8 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
 	
 	if (TextureTarget == nullptr) {
-		TextureTarget = NewObject<UTextureRenderTarget2D>(this, "TaskRender");
+		FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
+		TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
 	}
 	
 	bool textureUpdated = false;
@@ -136,20 +143,12 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 	
 	CheckTextureTarget();
 	CheckCaptureSettings();
-
-	if (memberPropertyName.IsEqual("CaptureSource")) {
-		if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
-			CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
-			CaptureSource = SCS_FinalColorHDR;
-		}
-		return;
-	}
 }
 #endif
 
 void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInterface* scene) {
 
-	CheckCaptureSettings();
+	//CheckCaptureSettings(); TODO: Don't use!
 	
 	if (TextureTarget == nullptr) {
 		return;
