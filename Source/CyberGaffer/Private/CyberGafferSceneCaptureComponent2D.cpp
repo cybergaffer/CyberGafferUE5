@@ -60,7 +60,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	
 	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
 	bOverride_CustomNearClippingPlane = true;
-	CustomNearClippingPlane = (distanceToSphere - radiusSphere);
+	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
 
 	ShowFlags.Bloom = false;
 	ShowFlags.EyeAdaptation = false;
