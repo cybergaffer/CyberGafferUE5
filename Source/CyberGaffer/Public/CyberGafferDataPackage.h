@@ -25,18 +25,19 @@ public:
 		ServerIpAddress(serverIp),
 		ServerPort(serverPort)
 	{
-		TArray<float> rgbFloatData;
-		rgbFloatData.Reserve(colors.Num() * 3);
+		TArray<float> rgbaFloatData;
+		rgbaFloatData.Reserve(colors.Num() * 4);
 	
 		for (auto i = 0; i < colors.Num(); ++i) {
-			rgbFloatData.Add(colors[i].R.GetFloat());
-			rgbFloatData.Add(colors[i].G.GetFloat());
-			rgbFloatData.Add(colors[i].B.GetFloat());
+			rgbaFloatData.Add(colors[i].R.GetFloat());
+			rgbaFloatData.Add(colors[i].G.GetFloat());
+			rgbaFloatData.Add(colors[i].B.GetFloat());
+			rgbaFloatData.Add(1);
 		}
 		
-		const auto byteDataSize = rgbFloatData.Num() * 4;
+		const auto byteDataSize = rgbaFloatData.Num() * 4;
 		Data.Empty(byteDataSize);
 		Data.SetNum(byteDataSize);
-		std::memcpy(Data.GetData(), rgbFloatData.GetData(), byteDataSize);		
+		std::memcpy(Data.GetData(), rgbaFloatData.GetData(), byteDataSize);		
 	}
 };

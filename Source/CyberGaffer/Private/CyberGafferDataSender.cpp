@@ -28,39 +28,36 @@ bool FCyberGafferDataSender::Init() {
 	return FRunnable::Init();
 }
 
-uint32 FCyberGafferDataSender::Run() {
+uint32 FCyberGafferDataSender::Run()
+{
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: thread created"));
-	while (!_exitRequested) {
-		{
-			FScopeLock lock(&_dataMutex);
-			if (_packageToSend.Data.Num() > 0) {
-				// UE_LOG(LogTemp, Log, TEXT("FCyberGafferDataSender::Run: preparing to send data to the server"));
-				const auto dataToSendLength = _packageToSend.Data.Num();
-				auto futureResult = SendData();
+	while (!_exitRequested)
+	{
+		FScopeLock lock(&_dataMutex);
+		if (_packageToSend.Data.Num() > 0) {
+			// UE_LOG(LogTemp, Log, TEXT("FCyberGafferDataSender::Run: preparing to send data to the server"));
+			const auto dataToSendLength = _packageToSend.Data.Num();
+			auto futureResult = SendData();
 				
-				lock.Unlock();
+			lock.Unlock();
+			futureResult.WaitFor(FTimespan(0, 0, 2));
 
-				// TODO: Replace Wait() with WaitFor()
-				 futureResult.WaitFor(FTimespan(0, 0, 2));
-				//futureResult.Wait();
-
-				if (futureResult.IsReady()) {
-					const auto result = futureResult.Get();
-					if (result != EHttpStatusCode::OK) {
-						CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: failed to send data, server response code: %i, stop sending for 1 second"), static_cast<int32>(result));
-						FPlatformProcess::Sleep(1.0f);
-					} else {
-						CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: send %i bytes to server, server response: %i"), dataToSendLength, static_cast<int32>(result));
-					}
+			if (futureResult.IsReady()) {
+				const auto result = futureResult.Get();
+				if (result != EHttpStatusCode::OK) {
+					CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: failed to send data, server response code: %i, stop sending for 1 second"), static_cast<int32>(result));
+					FPlatformProcess::Sleep(1.0f);
 				} else {
-					CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: future is not ready"));
+					CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: send %i bytes to server, server response: %i"), dataToSendLength, static_cast<int32>(result));
 				}
 			} else {
-				//CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: nothing to send"));
+				CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: future is not ready"));
 			}
+		} else {
+			//CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: nothing to send"));
 		}
-		// TODO: added to avoid spamming the server in dev state. Should be removed in future.  
-		//FPlatformProcess::Sleep(1.0f);
+			
+		lock.Unlock();
 	}
 	
 	CYBERGAFFERVERB_LOG(Warning, TEXT("FCyberGafferDataSender::Run: thread is destroyed"));
@@ -83,6 +80,8 @@ void FCyberGafferDataSender::SetPackageToSend(FCyberGafferDataPackage package) {
 	
 	_packageToSend = MoveTemp(package);
 
+	lock.Unlock(); 
+	
 	if (_thread == nullptr && !_exitRequested) {
 		CreateThread();
 	}
