@@ -5,6 +5,7 @@
 #include "Math/UnrealMathUtility.h"
 #include "PixelFormat.h"
 #include "CyberGafferLog.h"
+#include "CyberGafferSceneCapture.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "PrimitiveSceneProxy.h"
 #include "SceneManagement.h"
@@ -18,6 +19,7 @@ UCyberGafferSceneCaptureComponent2D::UCyberGafferSceneCaptureComponent2D() {
 
 	CheckTextureTarget();
 	CheckCaptureSettings();
+	InitializeSubsystem();
 }
 
 void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
@@ -72,7 +74,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	ShowFlags.Landscape = true;
 
 	if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
-		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
+		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
 		CaptureSource = SCS_FinalColorHDR;
 	}
 }
@@ -143,8 +145,13 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 	
 	CheckTextureTarget();
 	CheckCaptureSettings();
+
+	AActor* OwnerActor = GetOwner();
+	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(OwnerActor);
+	captureActor->UpdateChildTransforms();
 }
 #endif
+
 
 void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInterface* scene) {
 
@@ -156,7 +163,7 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 	
 	if (_subsystem == nullptr) {
 		if (!InitializeSubsystem()) {
-			CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponentCube::UpdateSceneCaptureContents: Subsystem is null"));
+			CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents: Subsystem is null"));
 			return;
 		}
 	}
@@ -164,7 +171,7 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 	Super::UpdateSceneCaptureContents(scene);
 
 	if (!FMath::IsPowerOfTwo(TextureTarget->SizeX)) {
-		CYBERGAFFER_LOG(Error, TEXT("UCyberGafferSceneCaptureComponentCube::UpdateSceneCaptureContents: the target cube texture side size must be power of 2. Recommended size: 512 or 1024"));
+		CYBERGAFFER_LOG(Error, TEXT("UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents: the target cube texture side size must be power of 2. Recommended size: 512 or 1024"));
 		return;
 	}
 	
@@ -176,5 +183,9 @@ void UCyberGafferSceneCaptureComponent2D::PostEditComponentMove(bool bFinished)
 {
 	Super::PostEditComponentMove(bFinished);
 	//CYBERGAFFER_LOG(Log, TEXT("PostEditComponentMove"));
+
+	AActor* OwnerActor = GetOwner();
+	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(OwnerActor);
+	captureActor->UpdateChildTransforms();
 }
 #endif

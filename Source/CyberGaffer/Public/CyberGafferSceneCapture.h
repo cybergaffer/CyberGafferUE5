@@ -14,7 +14,7 @@ UCLASS(HideCategories = (Collision, Material, Attachment, Actor))
 class CYBERGAFFER_API ACyberGafferSceneCapture : public ASceneCapture {
 	GENERATED_UCLASS_BODY()
 private:
-	UPROPERTY(Category = DecalActor, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", DisplayName = "CyberGafferSceneCaptureComponentCube"))
+	UPROPERTY(Category = DecalActor, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", DisplayName = "CyberGafferSceneCaptureComponent"))
 	TObjectPtr<class UCyberGafferSceneCaptureComponent2D> _cyberGafferSceneCaptureComponent2D;
 	UPROPERTY(Category = DecalActor, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true", DisplayName = "CyberGafferSceneCaptureTaskSphere"))
 	TObjectPtr<class UStaticMeshComponent> _taskSphere;
@@ -23,11 +23,10 @@ private:
 	UMaterial* BaseSphereMaterial;
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Rendering")
+	virtual void PostLoad() override;
 	void OnInterpToggle(bool bEnable);
-
-	class UCyberGafferSceneCaptureComponentCube* GetCyberGafferSceneCaptureComponentCube() const { return nullptr; };
-	void BeginPlay() override;
-	void PostActorCreated() override;
-	
+#if WITH_EDITOR
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	void UpdateChildTransforms();
 };

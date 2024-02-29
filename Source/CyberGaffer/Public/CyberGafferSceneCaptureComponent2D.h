@@ -43,7 +43,10 @@ public:
 protected:
 	void CheckTextureTarget();
 	bool InitializeSubsystem();
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) override;
+#endif
+	
 	virtual void UpdateSceneCaptureContents(FSceneInterface* scene) override;
 	void CheckCaptureSettings();
 	virtual void BeginPlay() override;
