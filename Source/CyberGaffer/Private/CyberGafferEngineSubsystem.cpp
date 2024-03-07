@@ -210,7 +210,6 @@ void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FSt
 			TArray<FFloat16Color> data;
 			FIntRect rect(0, 0, TargetMipSizeForTaskSphere, TargetMipSizeForTaskSphere); //With target mip size.
 			rhiCmdList.ReadSurfaceFloatData(mips[targetMip], rect, data, flags);
-
 			dataSender->SetPackageToSend(FCyberGafferDataPackage(serverIp, port, data));
 		}
 	);
