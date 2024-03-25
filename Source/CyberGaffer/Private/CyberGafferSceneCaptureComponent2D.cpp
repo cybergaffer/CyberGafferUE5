@@ -32,11 +32,6 @@ void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
 
 void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 {
-	if(!OverrideSceneCaptureParameters)
-	{
-		return;
-	}
-	
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings"));
 
 	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective)
@@ -48,13 +43,14 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 
 	PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
+	
 	PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
 	PostProcessSettings.LumenSurfaceCacheResolution = 1;
+
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
+	
 	PostProcessSettings.bOverride_LumenRayLightingMode = true;
-
-	bUseRayTracingIfEnabled = true;
 	
 	double distanceToSphere = 300 * GetComponentScale().X;
 	double radiusSphere = 5 * GetComponentScale().X;
@@ -62,6 +58,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
 	bOverride_CustomNearClippingPlane = true;
 	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
+	bUseRayTracingIfEnabled = 1;
 	
 	if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
 		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
