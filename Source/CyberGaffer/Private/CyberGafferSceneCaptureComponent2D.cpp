@@ -48,15 +48,13 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 
 	PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
-	
 	PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
 	PostProcessSettings.LumenSurfaceCacheResolution = 1;
-
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
-	
 	PostProcessSettings.bOverride_LumenRayLightingMode = true;
-	PostProcessSettings.LumenRayLightingMode = ELumenRayLightingModeOverride::SurfaceCache;
+
+	bUseRayTracingIfEnabled = true;
 	
 	double distanceToSphere = 300 * GetComponentScale().X;
 	double radiusSphere = 5 * GetComponentScale().X;
@@ -65,14 +63,6 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	bOverride_CustomNearClippingPlane = true;
 	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
 	
-	ShowFlags.Bloom = false;
-	ShowFlags.EyeAdaptation = false;
-	ShowFlags.LocalExposure = false;
-	ShowFlags.MotionBlur = false;
-	ShowFlags.ToneCurve = false;
-	ShowFlags.Landscape = true;
-	ShowFlags.PostProcessing = false;
-
 	if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
 		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty: Capture Source must be Final Color (HDR) in Linear Working Color Space, fixing it"));
 		CaptureSource = SCS_FinalColorHDR;
