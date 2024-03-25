@@ -7,7 +7,6 @@
 #include "CyberGafferSceneCaptureComponent2D.h"
 #include "CyberGafferSphereComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 
 ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
@@ -15,9 +14,9 @@ ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& obj
 	_cyberGafferSceneCaptureComponent2D = CreateDefaultSubobject<UCyberGafferSceneCaptureComponent2D>(TEXT("NewCyberGafferSceneCaptureComponent2D"));
 	_cyberGafferSceneCaptureComponent2D->SetupAttachment(RootComponent);
 	
-	static ConstructorHelpers::FObjectFinder<UStaticMesh>SphereMeshAsset(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>SphereMeshAsset(TEXT("/Script/Engine.StaticMesh'/CyberGaffer/sphere6.sphere6'"));
 
-	FString pathMaterial = "Script/Engine.Material'/CyberGaffer/Materials/WhiteDiffuse.WhiteDiffuse'";
+	FString pathMaterial = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferWhiteDiffuse.CyberGafferWhiteDiffuse'";
 	BaseSphereMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *pathMaterial));
 
 	_taskSphere = CreateDefaultSubobject<UCyberGafferSphereComponent>(TEXT("TaskSphere"));
