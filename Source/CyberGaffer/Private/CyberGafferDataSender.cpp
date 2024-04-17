@@ -93,7 +93,7 @@ TFuture<EHttpStatusCode> FCyberGafferDataSender::SendData() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SendData: start sending..."));
 	
 	auto& httpModule = FModuleManager::GetModuleChecked<FHttpModule>(TEXT("HTTP"));
-	const FString serverUrl = FString::Format(TEXT("http://{0}:{1}/UploadTask"), {_packageToSend.ServerIpAddress, _packageToSend.ServerPort});
+	const FString serverUrl = FString::Format(TEXT("http://{0}:{1}/UploadLightIdealTaskFromUnrealEngine"), {_packageToSend.ServerIpAddress, _packageToSend.ServerPort});
 	
 	const auto dataSize = _packageToSend.Data.Num();
 	
