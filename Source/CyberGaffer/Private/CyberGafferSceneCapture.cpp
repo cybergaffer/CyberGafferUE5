@@ -30,6 +30,7 @@ ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& obj
 	_gizmoSphere->SetStaticMesh(SphereMeshAsset.Object);
 	_gizmoSphere->SetOnlyOwnerSee(true);
 	_gizmoSphere->CastShadow = false;
+	_gizmoSphere->bHiddenInGame = true;
 	
 	_taskSphere->SetMaterial(0, BaseSphereMaterial);
 	_gizmoSphere->SetMaterial(0, BaseSphereMaterial);
@@ -44,11 +45,13 @@ void ACyberGafferSceneCapture::PostLoad()
 void ACyberGafferSceneCapture::OnInterpToggle(bool bEnable) {
 	_cyberGafferSceneCaptureComponent2D->SetVisibility(bEnable);
 	_taskSphere->SetVisibility(bEnable);
+	_gizmoSphere->SetVisibility(bEnable);
 }
 
 #if WITH_EDITOR
 void ACyberGafferSceneCapture::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 	UpdateChildTransforms();
 }
 #endif
@@ -56,15 +59,17 @@ void ACyberGafferSceneCapture::PostEditChangeProperty(FPropertyChangedEvent& Pro
 
 void ACyberGafferSceneCapture::UpdateChildTransforms()
 {
+	FVector sceneCaptureComponentScale {1,1,1};
 	FVector capturePosition = {-300,0,0};
 	FVector spherePosition = {0,0,0};
 	FVector sphereScale {0.1f,0.1f,0.1f};
 
 	_cyberGafferSceneCaptureComponent2D->SetRelativeLocation(capturePosition);
+	_cyberGafferSceneCaptureComponent2D->SetRelativeScale3D(sceneCaptureComponentScale);
 	_taskSphere->SetRelativeLocation(spherePosition);
-	_taskSphere->SetWorldScale3D(sphereScale);
+	_taskSphere->SetRelativeScale3D(sphereScale);
 	_gizmoSphere->SetRelativeLocation(spherePosition);
-	_gizmoSphere->SetWorldScale3D(sphereScale);
+	_gizmoSphere->SetRelativeScale3D(sphereScale);
 }
 
 

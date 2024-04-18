@@ -19,7 +19,6 @@ UCyberGafferSceneCaptureComponent2D::UCyberGafferSceneCaptureComponent2D() {
 
 	CheckTextureTarget();
 	CheckCaptureSettings();
-	InitializeSubsystem();
 }
 
 void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
@@ -28,7 +27,21 @@ void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
 	CheckTextureTarget();
 	CheckCaptureSettings();
 	InitializeSubsystem();
+	UpdateFOV();
 }
+
+#if WITH_EDITOR
+void UCyberGafferSceneCaptureComponent2D::OnComponentCreated()
+{
+	Super::OnComponentCreated();
+	CheckTextureTarget();
+	CheckCaptureSettings();
+	InitializeSubsystem();
+	UpdateFOV();
+}
+#endif
+
+
 
 void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 {
@@ -51,13 +64,6 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
 	
 	PostProcessSettings.bOverride_LumenRayLightingMode = true;
-	
-	double distanceToSphere = 300 * GetComponentScale().X;
-	double radiusSphere = 5 * GetComponentScale().X;
-	
-	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
-	bOverride_CustomNearClippingPlane = true;
-	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
 	bUseRayTracingIfEnabled = 1;
 	
 	if (CaptureSource.GetValue() != SCS_FinalColorHDR) {
@@ -65,6 +71,20 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 		CaptureSource = SCS_FinalColorHDR;
 	}
 }
+
+void UCyberGafferSceneCaptureComponent2D::UpdateFOV()
+{
+	AActor* OwnerActor = GetOwner();
+	float scale = OwnerActor->GetActorScale3D().X;
+	
+	double distanceToSphere = 300 * scale;
+	double radiusSphere = 5 * scale;
+	
+	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
+	bOverride_CustomNearClippingPlane = true;
+	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
+}
+
 
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 {
@@ -132,7 +152,8 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 	
 	CheckTextureTarget();
 	CheckCaptureSettings();
-
+	UpdateFOV();
+	
 	AActor* OwnerActor = GetOwner();
 	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(OwnerActor);
 	captureActor->UpdateChildTransforms();
@@ -141,8 +162,6 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 
 
 void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInterface* scene) {
-
-	//CheckCaptureSettings(); TODO: Don't use!
 	
 	if (TextureTarget == nullptr) {
 		return;
@@ -169,7 +188,6 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 void UCyberGafferSceneCaptureComponent2D::PostEditComponentMove(bool bFinished)
 {
 	Super::PostEditComponentMove(bFinished);
-	//CYBERGAFFER_LOG(Log, TEXT("PostEditComponentMove"));
 
 	AActor* OwnerActor = GetOwner();
 	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(OwnerActor);

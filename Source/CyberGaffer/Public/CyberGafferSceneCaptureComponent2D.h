@@ -41,10 +41,13 @@ protected:
 	void CheckTextureTarget();
 	bool InitializeSubsystem();
 #if WITH_EDITOR
+	virtual void OnComponentCreated() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) override;
 #endif
 	
+	
 	virtual void UpdateSceneCaptureContents(FSceneInterface* scene) override;
 	void CheckCaptureSettings();
+	void UpdateFOV();
 	virtual void BeginPlay() override;
 };
