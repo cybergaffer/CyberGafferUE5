@@ -12,6 +12,7 @@
 #include "ShaderParameterMacros.h"
 #include "ShaderParameterStruct.h"
 #include "ShaderParameterUtils.h"
+#include "Misc/EngineVersionComparison.h"
 
 #include "SceneView.h"
 
@@ -26,14 +27,15 @@ public:
 	FPackCubeMap_VS() = default;
 	FPackCubeMap_VS(const ShaderMetaType::CompiledShaderInitializerType& initializer) : FGlobalShader(initializer) {}
 
+#if UE_VERSION_OLDER_THAN(5, 3, 0)
+	void SetParameters(FRHICommandList& rhiCmdList, FRHIUniformBuffer* viewUniformBuffer){
+		FGlobalShader::SetParameters<FViewUniformShaderParameters>(rhiCmdList, rhiCmdList.GetBoundVertexShader(), viewUniformBuffer);
+	}
+#else
 	void SetParameters(FRHIBatchedShaderParameters& batchedParameters, FRHIUniformBuffer* viewUniformBuffer) {
 		FGlobalShader::SetParameters<FViewUniformShaderParameters>(batchedParameters, viewUniformBuffer);
 	}
-
-	// DEPRECATED
-	// void SetParameters(FRHICommandList& rhiCmdList, FRHIUniformBuffer* viewUniformBuffer){
-	// 	FGlobalShader::SetParameters<FViewUniformShaderParameters>(rhiCmdList, rhiCmdList.GetBoundVertexShader(), viewUniformBuffer);
-	// }
+#endif
 };
 
 class FPackCubeMap_PS : public FGlobalShader {
