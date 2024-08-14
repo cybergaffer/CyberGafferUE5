@@ -1,4 +1,8 @@
 #pragma once
+
+#include "CoreMinimal.h"
+#include "Components/StaticMeshComponent.h"
+
 #include "CyberGafferSphereComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))

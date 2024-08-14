@@ -9,6 +9,7 @@
 #include "Subsystems/EngineSubsystem.h"
 
 #include "Engine/TextureRenderTargetCube.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Templates/SharedPointer.h"
 #include "RHIResources.h"
 

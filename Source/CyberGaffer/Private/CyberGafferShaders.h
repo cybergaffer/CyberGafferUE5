@@ -26,9 +26,14 @@ public:
 	FPackCubeMap_VS() = default;
 	FPackCubeMap_VS(const ShaderMetaType::CompiledShaderInitializerType& initializer) : FGlobalShader(initializer) {}
 
-	void SetParameters(FRHICommandList& rhiCmdList, FRHIUniformBuffer* viewUniformBuffer){
-		FGlobalShader::SetParameters<FViewUniformShaderParameters>(rhiCmdList, rhiCmdList.GetBoundVertexShader(), viewUniformBuffer);
+	void SetParameters(FRHIBatchedShaderParameters& batchedParameters, FRHIUniformBuffer* viewUniformBuffer) {
+		FGlobalShader::SetParameters<FViewUniformShaderParameters>(batchedParameters, viewUniformBuffer);
 	}
+
+	// DEPRECATED
+	// void SetParameters(FRHICommandList& rhiCmdList, FRHIUniformBuffer* viewUniformBuffer){
+	// 	FGlobalShader::SetParameters<FViewUniformShaderParameters>(rhiCmdList, rhiCmdList.GetBoundVertexShader(), viewUniformBuffer);
+	// }
 };
 
 class FPackCubeMap_PS : public FGlobalShader {
