@@ -7,6 +7,7 @@
 #include "CyberGafferLog.h"
 #include "CyberGafferSceneCapture.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Math/Color.h"
 #include "PrimitiveSceneProxy.h"
 #include "SceneManagement.h"
 
@@ -91,8 +92,20 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
 	
 	if (TextureTarget == nullptr) {
-		FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
-		TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
+		// FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
+		// TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
+		
+		TextureTarget = CreateDefaultSubobject<UTextureRenderTarget2D>(TEXT("CyberGafferRenderTask"));
+		if (TextureTarget == nullptr) {
+			CYBERGAFFER_LOG(Error, TEXT("Failed to create UTextureRenderTarget2D"));
+			return;
+		}
+
+		TextureTarget->TargetGamma = 0.0f;
+		TextureTarget->AddressX = TA_Wrap;
+		TextureTarget->AddressY = TA_Wrap;
+		TextureTarget->ClearColor = FLinearColor::Black;
+		TextureTarget->MipGenSettings = TMGS_NoMipmaps;
 	}
 	
 	bool textureUpdated = false;
