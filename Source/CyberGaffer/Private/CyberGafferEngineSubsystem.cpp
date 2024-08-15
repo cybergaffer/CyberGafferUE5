@@ -16,6 +16,7 @@
 #include "CyberGafferShaders.h"
 #include "CyberGafferLog.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Misc/EngineVersionComparison.h"
 
 // The side size of the cubemap, that will be sent to the server
 static constexpr uint8 TargetMipSize = 64;
@@ -33,7 +34,7 @@ static uint8 GetTargetMipLevelIdForSphereTaskTexture(const uint32 width) {
 }
 
 // Create render targetable texture with RTV flag
-static FTextureRHIRef CreateRHITexture(const uint32 width, uint32 height) {
+static FTextureRHIRef CreateRHITexture(FRHICommandList& rhiCommandList, const uint32 width, uint32 height) {
 	auto textureDesc = FRHITextureCreateDesc::Create2D(TEXT("HDRI2RealityDownsampleTex"), width, height, EPixelFormat::PF_FloatRGBA);
 	textureDesc.SetClearValue(FClearValueBinding::Green);
 	textureDesc.SetFlags(ETextureCreateFlags::RenderTargetable);
@@ -47,7 +48,11 @@ static FTextureRHIRef CreateRHITexture(const uint32 width, uint32 height) {
 		textureDesc.AddFlags(ETextureCreateFlags::Shared);
 	}
 
+#if UE_VERSION_OLDER_THAN(5, 4, 0)
 	return GDynamicRHI->RHICreateTexture(textureDesc);
+#else
+	return GDynamicRHI->RHICreateTexture(rhiCommandList, textureDesc);
+#endif
 }
 
 void UCyberGafferEngineSubsystem::Initialize(FSubsystemCollectionBase& collection) {
@@ -86,7 +91,7 @@ void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FSt
 			}
 
 			// Create render target texture to store all 6 sides of cubemap
-			auto destTexture = CreateRHITexture(sideSize, sideSize * 6);
+			auto destTexture = CreateRHITexture(rhiCmdList, sideSize, sideSize * 6);
 			
 			rhiCmdList.Transition(FRHITransitionInfo(textureRHI, ERHIAccess::Unknown, ERHIAccess::SRVGraphics));
 			// rhiCmdList.Transition(FRHITransitionInfo(destTexture, ERHIAccess::Unknown, ERHIAccess::RTV));
@@ -219,7 +224,7 @@ void UCyberGafferEngineSubsystem::RenderMips(uint8 targetMip,TArray<FTextureRHIR
 {
 	for (uint8 i = 1; i <= targetMip; ++i) {
 		const auto prevTexture = mips[i - 1];
-		mips.Add(CreateRHITexture(prevTexture->GetDesc().Extent.X / 2, prevTexture->GetDesc().Extent.Y / 2));
+		mips.Add(CreateRHITexture(rhiCmdList, prevTexture->GetDesc().Extent.X / 2, prevTexture->GetDesc().Extent.Y / 2));
 		const auto currentTexture = mips[i];
 
 		rhiCmdList.Transition(FRHITransitionInfo(prevTexture, ERHIAccess::Unknown, ERHIAccess::SRVGraphics));

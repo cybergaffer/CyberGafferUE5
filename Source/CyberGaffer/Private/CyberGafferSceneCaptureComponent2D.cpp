@@ -105,7 +105,11 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 		TextureTarget->AddressX = TA_Wrap;
 		TextureTarget->AddressY = TA_Wrap;
 		TextureTarget->ClearColor = FLinearColor::Black;
-		TextureTarget->MipGenSettings = TMGS_NoMipmaps;
+		
+		// TODO: check if this is required by pipeline, MipGenSettings only presented in Editor
+// #if WITH_EDITOR
+// 		TextureTarget->MipGenSettings = TMGS_NoMipmaps;
+// #endif
 	}
 	
 	bool textureUpdated = false;
