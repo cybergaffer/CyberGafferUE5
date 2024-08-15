@@ -17,6 +17,7 @@
 #include "CyberGafferLog.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Misc/EngineVersionComparison.h"
+#include "Modules/ModuleManager.h"
 
 // The side size of the cubemap, that will be sent to the server
 static constexpr uint8 TargetMipSize = 64;
