@@ -28,7 +28,7 @@ static TAutoConsoleVariable<int32> CVarEnableCyberGafferLogging(
 
 #ifdef CYBERGAFFERLOG_VERBOSE
 #define CYBERGAFFERVERB_LOG(verbosity, message, ...) \
-	if(CVarEnableCyberGafferLogging.GetValueOnAnyThread() != 0) { \
+	if(CVarEnableCyberGafferLogging.GetValueOnAnyThread()) { \
 		UE_LOG(CyberGafferLog, verbosity, message, ##__VA_ARGS__); \
 		}
 #else
