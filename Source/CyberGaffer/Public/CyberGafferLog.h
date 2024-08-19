@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HAL/IConsoleManager.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(CyberGafferLog, Log, All);
 
