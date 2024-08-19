@@ -9,6 +9,13 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(CyberGafferLog, Log, All);
 
+static TAutoConsoleVariable<int32> CVarEnableCyberGafferLogging(
+	TEXT("CyberGaffer.EnableDeveloperLogging"),
+	false,                                 
+	TEXT("Enables or disables CyberGaffer developer logging"),
+	ECVF_Default
+);
+
 #define CYBERGAFFERLOG
 
 #ifdef CYBERGAFFERLOG
@@ -20,7 +27,12 @@ DECLARE_LOG_CATEGORY_EXTERN(CyberGafferLog, Log, All);
 #define CYBERGAFFERLOG_VERBOSE
 
 #ifdef CYBERGAFFERLOG_VERBOSE
-#define CYBERGAFFERVERB_LOG(verbosity, message, ...) UE_LOG(CyberGafferLog, verbosity, message, ##__VA_ARGS__)
+#define CYBERGAFFERVERB_LOG(verbosity, message, ...) \
+	if(CVarEnableCyberGafferLogging.GetValueOnAnyThread() != 0) { \
+		UE_LOG(CyberGafferLog, verbosity, message, ##__VA_ARGS__); \
+		}
 #else
 #define CYBERGAFFERVERB_LOG(verbosity, message, ...)
 #endif
+
+
