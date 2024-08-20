@@ -90,12 +90,19 @@ void UCyberGafferSceneCaptureComponent2D::UpdateFOV()
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
+
+	auto targetSize = 128 * (uint8)SuperSampling;
+	auto targetFormat = PF_FloatRGBA;
 	
 	if (TextureTarget == nullptr) {
 		// FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
 		// TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
 		
-		TextureTarget = CreateDefaultSubobject<UTextureRenderTarget2D>(TEXT("CyberGafferRenderTask"));
+		TextureTarget = NewObject<UTextureRenderTarget2D>();
+		TextureTarget->InitCustomFormat(targetSize,targetSize, targetFormat, true);
+		TextureTarget->UpdateResourceImmediate();
+		
+		//TextureTarget = CreateDefaultSubobject<UTextureRenderTarget2D>(TEXT("CyberGafferRenderTask"));
 		if (TextureTarget == nullptr) {
 			CYBERGAFFER_LOG(Error, TEXT("Failed to create UTextureRenderTarget2D"));
 			return;
@@ -119,8 +126,6 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 		TextureTarget->bHDR_DEPRECATED = true;
 		textureUpdated = true;
 	}
-
-	auto targetSize = 128 * (uint8)SuperSampling;
 	
 	if (TextureTarget->SizeX != TextureTarget->SizeY || TextureTarget->SizeX != targetSize) {
 		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget: TextureRenderTargetCube size must be power of 2, fixing it"));
@@ -130,9 +135,9 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 	}
 
 	auto format = TextureTarget->GetFormat();
-	if (format != PF_FloatRGBA) {
+	if (format != targetFormat) {
 		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget: TextureRenderTargetCube format must be RGBA16F, fixing it"));
-		format = PF_FloatRGBA;
+		format = targetFormat;
 		textureUpdated = true;
 	}
 
