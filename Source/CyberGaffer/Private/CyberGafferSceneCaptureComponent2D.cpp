@@ -17,8 +17,7 @@ UCyberGafferSceneCaptureComponent2D::UCyberGafferSceneCaptureComponent2D() {
 	// TODO: find a way to mark this properties uneditable. Using the ClearPropertyFlags(CPF_Edit) will change the parent class as well. 
 	bCaptureEveryFrame = true;
 	CaptureSource = SCS_FinalColorHDR;
-
-	CheckTextureTarget();
+	
 	CheckCaptureSettings();
 }
 
@@ -95,14 +94,11 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 	auto targetFormat = PF_FloatRGBA;
 	
 	if (TextureTarget == nullptr) {
-		// FString pathTexture = "/Script/Engine.TextureRenderTarget2D'/CyberGaffer/TaskRender.TaskRender'";
-		// TextureTarget = Cast<UTextureRenderTarget2D>(StaticLoadObject(UTextureRenderTarget2D::StaticClass(), nullptr, *pathTexture));
 		
 		TextureTarget = NewObject<UTextureRenderTarget2D>();
 		TextureTarget->InitCustomFormat(targetSize,targetSize, targetFormat, true);
 		TextureTarget->UpdateResourceImmediate();
 		
-		//TextureTarget = CreateDefaultSubobject<UTextureRenderTarget2D>(TEXT("CyberGafferRenderTask"));
 		if (TextureTarget == nullptr) {
 			CYBERGAFFER_LOG(Error, TEXT("Failed to create UTextureRenderTarget2D"));
 			return;
@@ -184,6 +180,8 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 
 
 void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInterface* scene) {
+
+	CheckTextureTarget();
 	
 	if (TextureTarget == nullptr) {
 		return;
