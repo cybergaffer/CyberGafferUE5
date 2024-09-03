@@ -1,9 +1,4 @@
-﻿// Copyright (c) 2023 ALT LLC.
-//
-// Distributed under the terms of the MIT License (see the accompanying LICENSE.txt file or get a copy at http://opensource.org/licenses/MIT).
-
-
-#include "CyberGafferSceneCaptureComponentCube.h"
+﻿#include "CyberGafferSceneCaptureComponentCube.h"
 
 #include "Engine/TextureRenderTargetCube.h"
 #include "Engine/Engine.h"

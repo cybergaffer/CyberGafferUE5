@@ -1,9 +1,4 @@
-﻿// Copyright (c) 2023 ALT LLC.
-//
-// Distributed under the terms of the MIT License (see the accompanying LICENSE.txt file or get a copy at http://opensource.org/licenses/MIT).
-
-
-#include "CyberGafferSceneCapture.h"
+﻿#include "CyberGafferSceneCapture.h"
 #include "CyberGafferSceneCaptureComponent2D.h"
 #include "CyberGafferSphereComponent.h"
 #include "UObject/ConstructorHelpers.h"
