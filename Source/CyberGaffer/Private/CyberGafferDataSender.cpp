@@ -33,7 +33,7 @@ uint32 FCyberGafferDataSender::Run() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: thread created"));
 
 	FRequestResult requestResult;
-	const auto waitForResponseMaxTime = FTimespan::FromSeconds(1);
+	const auto waitForResponseMaxTime = FTimespan::FromSeconds(3);
 	
 	while (!_exitRequested)
 	{
