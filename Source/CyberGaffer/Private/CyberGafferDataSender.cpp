@@ -4,6 +4,8 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Modules/ModuleManager.h"
+#include "Misc/Timespan.h"
+#include "Misc/DateTime.h"
 
 #include "CyberGafferLog.h"
 
@@ -27,11 +29,11 @@ bool FCyberGafferDataSender::Init() {
 	return FRunnable::Init();
 }
 
-uint32 FCyberGafferDataSender::Run()
-{
+uint32 FCyberGafferDataSender::Run() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: thread created"));
 
 	FRequestResult requestResult;
+	const auto waitForResponseMaxTime = FTimespan::FromSeconds(1);
 	
 	while (!_exitRequested)
 	{
@@ -39,9 +41,11 @@ uint32 FCyberGafferDataSender::Run()
 		if (_packageToSend.Data.Num() > 0) {
 			// UE_LOG(LogTemp, Log, TEXT("FCyberGafferDataSender::Run: preparing to send data to the server"));
 			const auto dataToSendLength = _packageToSend.Data.Num();
-			auto currentRequest = SendData();
+			const auto requestSent = SendData();
 				
 			lock.Unlock();
+
+			const auto requestSentTime = FDateTime::UtcNow();
 			
 			while (true) {
 				if (_exitRequested) {
@@ -51,13 +55,13 @@ uint32 FCyberGafferDataSender::Run()
 				requestResult = GetRequestResult();
 				if (requestResult.State == ERequestState::Ready) {
 					break;
-				}	
-				
-				// if (currentRequest.IsReady()) {
-				// 	break;
-				// }
+				}
 
-				FPlatformProcess::Sleep(2.0f);
+				if ((FDateTime::UtcNow() - requestSentTime) >= waitForResponseMaxTime) {
+					break;
+				}
+
+				FPlatformProcess::Sleep(0.025f);
 			}
 			
 			// if (currentRequest.IsReady()) {
@@ -80,6 +84,8 @@ uint32 FCyberGafferDataSender::Run()
 					CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: send %i bytes to server, server response: %i"), dataToSendLength, static_cast<int32>(requestResult.HttpStatus));
 				}
 			} else {
+				_requestResult.Request->OnProcessRequestComplete().Unbind();
+				_requestResult.Request->CancelRequest();
 				CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: future is not ready"));
 			}
 		} else {
@@ -127,7 +133,10 @@ bool FCyberGafferDataSender::SendData() {
 
 	{
 		FScopeLock lock(&_requestResultMutex);
-		_requestResult = {};
+		_requestResult.State = ERequestState::Undefined;
+		_requestResult.Request = nullptr;
+		_requestResult.Succeeded = false;
+		_requestResult.HttpStatus = EHttpStatusCode::BadRequest;
 	}
 	
 	auto& httpModule = FModuleManager::GetModuleChecked<FHttpModule>(TEXT("HTTP"));
@@ -162,6 +171,7 @@ bool FCyberGafferDataSender::SendData() {
 	{
 		FScopeLock lock(&_requestResultMutex);
 		_requestResult.State = ERequestState::Processing;
+		_requestResult.Request = request.ToSharedPtr();
 	}
 	
 	return request->ProcessRequest();
@@ -181,6 +191,11 @@ void FCyberGafferDataSender::CreateThread() {
 
 void FCyberGafferDataSender::SetRequestResult(FHttpRequestPtr request, FHttpResponsePtr response, bool succeeded) {
 	FScopeLock lock(&_requestResultMutex);
+
+	if (_requestResult.Request != request) {
+		CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::SetRequestResult: possible old request processing"));
+		return;
+	}
 
 	_requestResult.State = ERequestState::Ready;
 	_requestResult.Succeeded = succeeded;

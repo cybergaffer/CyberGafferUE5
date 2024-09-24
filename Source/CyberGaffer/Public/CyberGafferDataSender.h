@@ -91,6 +91,7 @@ enum class ERequestState : int32 {
 struct FRequestResult {
 public:
 	ERequestState State = ERequestState::Undefined;
+	TSharedPtr<IHttpRequest> Request = nullptr;
 	bool Succeeded = false;
 	EHttpStatusCode HttpStatus = EHttpStatusCode::BadRequest;
 };
