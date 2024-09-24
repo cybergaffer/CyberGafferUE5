@@ -82,6 +82,19 @@ enum class EHttpStatusCode : int32 {
 	TLSHandshake = 525, // An error occurred during a TLS handshake.
 };
 
+enum class ERequestState : int32 {
+	Undefined,
+	Processing,
+	Ready
+};
+
+struct FRequestResult {
+public:
+	ERequestState State = ERequestState::Undefined;
+	bool Succeeded = false;
+	EHttpStatusCode HttpStatus = EHttpStatusCode::BadRequest;
+};
+
 class FCyberGafferDataSender : public FRunnable, public TSharedFromThis<FCyberGafferDataSender, ESPMode::ThreadSafe> {
 public:
 	FCyberGafferDataSender();
@@ -103,7 +116,16 @@ private:
 	FCriticalSection _threadMutex;
 	FCyberGafferDataPackage _packageToSend;
 	
-	TFuture<EHttpStatusCode> SendData();
+	// TFuture<EHttpStatusCode> SendData();
+	bool SendData();
+
+	TFuture<EHttpStatusCode> _currentRequest = {};
+
+	FCriticalSection _requestResultMutex;
+	FRequestResult _requestResult = {};
 
 	void CreateThread();
+
+	void SetRequestResult(FHttpRequestPtr request, FHttpResponsePtr response, bool succeeded);
+	FRequestResult GetRequestResult();
 };

@@ -21,39 +21,71 @@ FCyberGafferDataSender::~FCyberGafferDataSender() {
 }
 
 bool FCyberGafferDataSender::Init() {
+#if WITH_EDITOR
+	GEngine->OnEditorClose().AddSP(this, &FCyberGafferDataSender::Stop);
+#endif
 	return FRunnable::Init();
 }
 
 uint32 FCyberGafferDataSender::Run()
 {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: thread created"));
+
+	FRequestResult requestResult;
+	
 	while (!_exitRequested)
 	{
 		FScopeLock lock(&_dataMutex);
 		if (_packageToSend.Data.Num() > 0) {
 			// UE_LOG(LogTemp, Log, TEXT("FCyberGafferDataSender::Run: preparing to send data to the server"));
 			const auto dataToSendLength = _packageToSend.Data.Num();
-			auto futureResult = SendData();
+			auto currentRequest = SendData();
 				
 			lock.Unlock();
-			futureResult.WaitFor(FTimespan(0, 0, 2));
+			
+			while (true) {
+				if (_exitRequested) {
+					return 0;
+				}
 
-			if (futureResult.IsReady()) {
-				const auto result = futureResult.Get();
-				if (result != EHttpStatusCode::OK) {
-					CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: failed to send data, server response code: %i, stop sending for 1 second"), static_cast<int32>(result));
+				requestResult = GetRequestResult();
+				if (requestResult.State == ERequestState::Ready) {
+					break;
+				}	
+				
+				// if (currentRequest.IsReady()) {
+				// 	break;
+				// }
+
+				FPlatformProcess::Sleep(2.0f);
+			}
+			
+			// if (currentRequest.IsReady()) {
+			// 	const auto result = currentRequest.Get();
+			// 	if (result != EHttpStatusCode::OK) {
+			// 		CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: failed to send data, server response code: %i, stop sending for 1 second"), static_cast<int32>(result));
+			// 		FPlatformProcess::Sleep(1.0f);
+			// 	} else {
+			// 		CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: send %i bytes to server, server response: %i"), dataToSendLength, static_cast<int32>(result));
+			// 	}
+			// } else {
+			// 	CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: future is not ready"));
+			// }
+
+			if (requestResult.State == ERequestState::Ready) {
+				if (requestResult.HttpStatus != EHttpStatusCode::OK) {
+					CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: failed to send data, server response code: %i, stop sending for 1 second"), static_cast<int32>(requestResult.HttpStatus));
 					FPlatformProcess::Sleep(1.0f);
 				} else {
-					CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: send %i bytes to server, server response: %i"), dataToSendLength, static_cast<int32>(result));
+					CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: send %i bytes to server, server response: %i"), dataToSendLength, static_cast<int32>(requestResult.HttpStatus));
 				}
 			} else {
 				CYBERGAFFER_LOG(Warning, TEXT("FCyberGafferDataSender::Run: future is not ready"));
 			}
 		} else {
+			lock.Unlock();
 			//CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::Run: nothing to send"));
 		}
-			
-		lock.Unlock();
 	}
 	
 	CYBERGAFFERVERB_LOG(Warning, TEXT("FCyberGafferDataSender::Run: thread is destroyed"));
@@ -63,6 +95,10 @@ uint32 FCyberGafferDataSender::Run()
 
 void FCyberGafferDataSender::Stop() {
 	_exitRequested = true;
+
+	// if (_currentRequest.IsValid()) {
+	// 	_currentRequest.Reset();
+	// }
 }
 
 void FCyberGafferDataSender::SetPackageToSend(FCyberGafferDataPackage package) {
@@ -85,8 +121,14 @@ void FCyberGafferDataSender::SetPackageToSend(FCyberGafferDataPackage package) {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SetData: complete"));
 }
 
-TFuture<EHttpStatusCode> FCyberGafferDataSender::SendData() {
+// TFuture<EHttpStatusCode> FCyberGafferDataSender::SendData() {
+bool FCyberGafferDataSender::SendData() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SendData: start sending..."));
+
+	{
+		FScopeLock lock(&_requestResultMutex);
+		_requestResult = {};
+	}
 	
 	auto& httpModule = FModuleManager::GetModuleChecked<FHttpModule>(TEXT("HTTP"));
 	const FString serverUrl = FString::Format(TEXT("http://{0}:{1}/UploadLightIdealTaskFromUnrealEngine"), {_packageToSend.ServerIpAddress, _packageToSend.ServerPort});
@@ -99,21 +141,30 @@ TFuture<EHttpStatusCode> FCyberGafferDataSender::SendData() {
 	request->SetHeader("Content-Type", TEXT("application/octet-stream"));
 	request->SetContent(MoveTemp(_packageToSend.Data));
 
-	auto resultPromise = MakeShared<TPromise<EHttpStatusCode>>();
-	request->OnProcessRequestComplete().BindLambda([resultPromise](FHttpRequestPtr request, FHttpResponsePtr response, bool succeeded)	{
-		if (response != nullptr) {
-			resultPromise->EmplaceValue(static_cast<EHttpStatusCode>(response->GetResponseCode()));
-		} else {
-			resultPromise->EmplaceValue(EHttpStatusCode::BadRequest);
-		}
-	});
+	request->OnProcessRequestComplete().BindSP(this, &FCyberGafferDataSender::SetRequestResult);
+
+	// auto resultPromise = MakeShared<TPromise<EHttpStatusCode>>();
+	// request->OnProcessRequestComplete().BindLambda([resultPromise](FHttpRequestPtr request, FHttpResponsePtr response, bool succeeded)	{
+	// 	if (response != nullptr) {
+	// 		resultPromise->EmplaceValue(static_cast<EHttpStatusCode>(response->GetResponseCode()));
+	// 	} else {
+	// 		resultPromise->EmplaceValue(EHttpStatusCode::BadRequest);
+	// 	}
+	// });
 	
-	const auto result = request->ProcessRequest();
-	_packageToSend = {};
+	// const auto result = request->ProcessRequest();
+	// _packageToSend = {};
+	//
+	// CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SendData: sending complete, wait for server response"));
+	//
+	// return resultPromise->GetFuture();
 
-	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::SendData: sending complete, wait for server response"));
-
-	return resultPromise->GetFuture();
+	{
+		FScopeLock lock(&_requestResultMutex);
+		_requestResult.State = ERequestState::Processing;
+	}
+	
+	return request->ProcessRequest();
 }
 
 void FCyberGafferDataSender::CreateThread() {
@@ -126,4 +177,22 @@ void FCyberGafferDataSender::CreateThread() {
 	
 	CYBERGAFFERVERB_LOG(Log, TEXT("FCyberGafferDataSender::CreateThread"))
 	_thread = FRunnableThread::Create(this, TEXT("CyberGafferDataSenderThread"));
+}
+
+void FCyberGafferDataSender::SetRequestResult(FHttpRequestPtr request, FHttpResponsePtr response, bool succeeded) {
+	FScopeLock lock(&_requestResultMutex);
+
+	_requestResult.State = ERequestState::Ready;
+	_requestResult.Succeeded = succeeded;
+	
+	if (response != nullptr) {
+		_requestResult.HttpStatus = static_cast<EHttpStatusCode>(response->GetResponseCode());
+	} else {
+		_requestResult.HttpStatus = EHttpStatusCode::BadRequest;
+	}
+}
+
+FRequestResult FCyberGafferDataSender::GetRequestResult() {
+	FScopeLock lock(&_requestResultMutex);
+	return _requestResult;
 }
