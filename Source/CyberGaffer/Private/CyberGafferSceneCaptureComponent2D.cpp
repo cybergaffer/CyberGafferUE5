@@ -31,8 +31,7 @@ void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
 }
 
 #if WITH_EDITOR
-void UCyberGafferSceneCaptureComponent2D::OnComponentCreated()
-{
+void UCyberGafferSceneCaptureComponent2D::OnComponentCreated() {
 	Super::OnComponentCreated();
 	CheckTextureTarget();
 	CheckCaptureSettings();
@@ -42,13 +41,10 @@ void UCyberGafferSceneCaptureComponent2D::OnComponentCreated()
 #endif
 
 
-
-void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
-{
+void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings"));
 
-	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective)
-	{
+	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective) {
 		ProjectionType = ECameraProjectionMode::Type::Perspective;
 	}
 	
@@ -72,10 +68,9 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings()
 	}
 }
 
-void UCyberGafferSceneCaptureComponent2D::UpdateFOV()
-{
-	AActor* OwnerActor = GetOwner();
-	float scale = OwnerActor->GetActorScale3D().X;
+void UCyberGafferSceneCaptureComponent2D::UpdateFOV() {
+	AActor* ownerActor = GetOwner();
+	float scale = ownerActor->GetActorScale3D().X;
 	
 	double distanceToSphere = 300 * scale;
 	double radiusSphere = 5 * scale;
@@ -86,15 +81,13 @@ void UCyberGafferSceneCaptureComponent2D::UpdateFOV()
 }
 
 
-void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
-{
+void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
 
 	auto targetSize = 128 * (uint8)SuperSampling;
 	auto targetFormat = PF_FloatRGBA;
 	
 	if (TextureTarget == nullptr) {
-		
 		TextureTarget = NewObject<UTextureRenderTarget2D>();
 		TextureTarget->InitCustomFormat(targetSize,targetSize, targetFormat, true);
 		TextureTarget->UpdateResourceImmediate();
@@ -152,7 +145,6 @@ void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget()
 }
 
 bool UCyberGafferSceneCaptureComponent2D::InitializeSubsystem() {
-	
 	if (GEngine == nullptr) {
 		CYBERGAFFER_LOG(Warning, TEXT("UCyberGafferSceneCaptureComponent2D::InitializeSubsystem: GEngine is null"));
 		return false;
@@ -180,7 +172,6 @@ void UCyberGafferSceneCaptureComponent2D::PostEditChangeProperty(FPropertyChange
 
 
 void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInterface* scene) {
-
 	CheckTextureTarget();
 	
 	if (TextureTarget == nullptr) {
@@ -205,8 +196,7 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 }
 
 #if WITH_EDITOR
-void UCyberGafferSceneCaptureComponent2D::PostEditComponentMove(bool bFinished)
-{
+void UCyberGafferSceneCaptureComponent2D::PostEditComponentMove(bool bFinished) {
 	Super::PostEditComponentMove(bFinished);
 
 	AActor* OwnerActor = GetOwner();

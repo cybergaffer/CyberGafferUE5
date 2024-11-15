@@ -5,17 +5,16 @@
 void UCyberGafferSphereComponent::PostEditChangeProperty(FPropertyChangedEvent& propertyChangedEvent) {
 	Super::PostEditChangeProperty(propertyChangedEvent);
 
-	AActor* OwnerActor = GetOwner();
-	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(OwnerActor);
+	AActor* ownerActor = GetOwner();
+	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(ownerActor);
 	captureActor->UpdateChildTransforms();
 }
 
-void UCyberGafferSphereComponent::PostEditComponentMove(bool bFinished)
-{
+void UCyberGafferSphereComponent::PostEditComponentMove(bool bFinished) {
 	Super::PostEditComponentMove(bFinished);
 
-	AActor* OwnerActor = GetOwner();
-	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(OwnerActor);
+	AActor* ownerActor = GetOwner();
+	ACyberGafferSceneCapture* captureActor = Cast<ACyberGafferSceneCapture>(ownerActor);
 	captureActor->UpdateChildTransforms();
 }
 

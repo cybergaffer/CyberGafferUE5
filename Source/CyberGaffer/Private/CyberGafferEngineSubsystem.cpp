@@ -63,7 +63,7 @@ void UCyberGafferEngineSubsystem::Deinitialize() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferEngineSubsystem::Deinitialize"));
 }
 
-void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FString serverIp, const uint32_t port, UTextureRenderTargetCube* texture) {
+void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FString& serverIp, const uint32_t port, UTextureRenderTargetCube* texture) {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued"));
 	
 	auto dataSender = _dataSender;
@@ -171,7 +171,7 @@ void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FSt
 }
 
 
-void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FString serverIp, const uint32_t port, UTextureRenderTarget2D* texture) {
+void UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued(const FString& serverIp, const uint32_t port, UTextureRenderTarget2D* texture) {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferEngineSubsystem::OnUpdateSceneCaptureContentsEnqueued"));
 	
 	auto dataSender = _dataSender;

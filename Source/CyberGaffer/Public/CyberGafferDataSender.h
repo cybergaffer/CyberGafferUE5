@@ -117,7 +117,6 @@ private:
 	FCriticalSection _threadMutex;
 	FCyberGafferDataPackage _packageToSend;
 	
-	// TFuture<EHttpStatusCode> SendData();
 	bool SendData();
 
 	TFuture<EHttpStatusCode> _currentRequest = {};
