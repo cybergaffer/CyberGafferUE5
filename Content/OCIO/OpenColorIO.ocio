@@ -1,0 +1,11 @@
+ocio_profile_version: 2
+roles:
+  default: Linear
+colorspaces:
+  - !<ColorSpace>
+    name: Linear
+  - !<ColorSpace>
+    name: Linear2
+  - !<ColorSpace>
+    name: sRGB
+    to_reference: !<ExponentWithLinearTransform> {gamma: 2.4, offset: 0.055}

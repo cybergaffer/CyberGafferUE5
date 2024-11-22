@@ -22,6 +22,14 @@
 			"WhitelistPlatforms": [
 				"Win64"
 			]
+		},
+		{
+			"Name": "CyberGafferWindow",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
 		}
 	]
 }
