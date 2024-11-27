@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+#include "Materials/MaterialInstance.h"
+
 class FToolBarBuilder;
 class FMenuBuilder;
 
@@ -24,4 +26,7 @@ private:
 
 private:
 	TSharedPtr<class FUICommandList> _pluginCommands;
+
+	TWeakPtr<UMaterialInstance> _postProcessMaterialInstance = nullptr;
+	TWeakPtr<UMaterialInstance> _cameraPostProcessMaterialInstance = nullptr;
 };

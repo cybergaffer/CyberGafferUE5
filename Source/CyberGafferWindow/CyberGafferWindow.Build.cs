@@ -33,7 +33,9 @@ public class CyberGafferWindow : ModuleRules {
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore"
+				"SlateCore",
+				"PropertyEditor",
+				"AssetRegistry"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);
