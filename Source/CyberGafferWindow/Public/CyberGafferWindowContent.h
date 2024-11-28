@@ -7,7 +7,7 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "PropertyCustomizationHelpers.h"
-#include "CyberGafferWindowFields.h"
+#include "CyberGafferWindowSettings.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "HAL/CriticalSection.h"
 

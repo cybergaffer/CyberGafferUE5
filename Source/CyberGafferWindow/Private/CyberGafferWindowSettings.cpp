@@ -1,4 +1,4 @@
-#include "CyberGafferWindowFields.h"
+#include "CyberGafferWindowSettings.h"
 
 TOptional<FCyberGafferWindowSceneSettings*> UCyberGafferWindowSettings::GetSettingsForScene(const FString& sceneName) {
 	auto* sceneSettings = ScenesSettings.Find(sceneName);
