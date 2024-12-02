@@ -8,12 +8,13 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "PropertyCustomizationHelpers.h"
 #include "CyberGafferWindowSettings.h"
-#include "Materials/MaterialParameterCollection.h"
+#include "UObject/StrongObjectPtr.h"
 #include "HAL/CriticalSection.h"
 
-// class FStructOnScope;
-
-
+enum PostProcessMaterialType {
+	Global,
+	Camera
+};
 
 /**
  * 
@@ -32,17 +33,12 @@ public:
 	
 
 private:
-	TObjectPtr<UCyberGafferWindowSettings> _settings;
+	TStrongObjectPtr<UCyberGafferWindowSettings> _settings;
 	
 	TWeakPtr<SDockTab> _containingTab;
 
-	// TSharedPtr<FStructOnScope> _windowFields;
-	// TSharedPtr<IStructureDetailsView> _detailsView;
-
 	TOptional<FString> _currentSceneName;
 	mutable FCriticalSection _currentSceneNameCriticalSection;
-
-	// void OnPropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
 
 	TWeakObjectPtr<UMaterialInstance> _postProcessMaterial;
 	TWeakObjectPtr<UMaterialInstance> _cameraPostProcessMaterial;
@@ -50,15 +46,14 @@ private:
 	TSharedPtr<SObjectPropertyEntryBox> _postProcessMaterialSelector;
 	TSharedPtr<SObjectPropertyEntryBox> _cameraPostProcessMaterialSelector;
 
-	TWeakObjectPtr<UMaterialParameterCollection> _postProcessMaterialParameters;
-
 	static UMaterialInstance* LoadMaterialUsingPath(const FString& path);
 
 	TOptional<FString> ReadCurrentSceneName();
 	TOptional<FString> GetCurrentSceneName() const;
 	void SetCurrentSceneName(const FString& newSceneName);
 
-	void SaveMaterialChanges(TWeakObjectPtr<UMaterialInstance> material);
+	void SaveMaterialChanges(TWeakObjectPtr<UMaterialInterface> material);
+	void SaveMaterialsChanges(TArray<UMaterialInterface*> materials);
 
 	FString GetPostProcessMaterialPath() const;
 	void OnPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
@@ -74,5 +69,10 @@ private:
 	void OnColorGradingValueChanged(FLinearColor color);
 	void OnColorGradingCaptureEnd();
 
+	FText GetShadersIncludePath() const;
+	void OnShadersIncludePathCommitted(const FText& newText, ETextCommit::Type commitType);
+
 	bool IsPostProcessMaterialValid() const;
+
+	FReply CreatePostProcessMaterialInstance(const PostProcessMaterialType type);
 };

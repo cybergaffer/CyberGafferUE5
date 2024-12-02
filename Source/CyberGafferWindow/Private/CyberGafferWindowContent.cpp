@@ -22,6 +22,10 @@
 // #include "UObject/StructOnScope.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Editor/UnrealEd/Public/FileHelpers.h"
+#include "CyberGaffer.h"
+#include "Editor/LevelEditor/Public/LevelEditorActions.h"
+#include "AssetToolsModule.h"
+#include "Factories/MaterialInstanceConstantFactoryNew.h"
 
 #define LOCTEXT_NAMESPACE "FCyberGafferWindowModule"
 
@@ -39,7 +43,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 	// _detailsView = propertyEditor.CreateStructureDetailView(detailsViewArgs, structureDetailsViewArgs, _windowFields);
 	// _detailsView->GetOnFinishedChangingPropertiesDelegate().AddSP(this, &SCyberGafferWindowContent::OnPropertiesChanged);
 
-	_settings = NewObject<UCyberGafferWindowSettings>();
+	_settings = TStrongObjectPtr<UCyberGafferWindowSettings>(NewObject<UCyberGafferWindowSettings>());
 
 	ReadCurrentSceneName();
 
@@ -52,11 +56,6 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			_settings->ScenesSettings.Add(_currentSceneName.GetValue(), FCyberGafferWindowSceneSettings());
 			_settings->SaveConfig();
 		}
-	}
-
-	UMaterialParameterCollection* collection = Cast<UMaterialParameterCollection>(StaticLoadObject(UMaterialParameterCollection::StaticClass(), nullptr, TEXT("/Script/Engine.MaterialParameterCollection'/CyberGaffer/Materials/CyberGafferPostProcessParameters.CyberGafferPostProcessParameters'")));
-	if (collection == nullptr) {
-		UE_LOG(LogTemp, Error, TEXT("Failed to find material parameters"));
 	}
 	
 	_postProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
@@ -88,6 +87,36 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		// _detailsView->GetWidget().ToSharedRef()
 		
 		SNew(SVerticalBox)
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.FillWidth(headerWidth)
+			.HAlign(HAlign_Center)
+			.Padding(headerMargin)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("CreateNewPPMIText", "Create new post process material for scene"))
+				.OnClicked(this, &SCyberGafferWindowContent::CreatePostProcessMaterialInstance, PostProcessMaterialType::Global)
+			]
+		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.FillWidth(headerWidth)
+			.HAlign(HAlign_Center)
+			.Padding(headerMargin)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("CreateNewCPPMIText", "Create new camera post process material for scene"))
+			]
+			
+		]
 		+SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(0)
@@ -217,6 +246,35 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.IsEnabled(this, &SCyberGafferWindowContent::IsPostProcessMaterialValid)
 			]
 		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.FillWidth(headerWidth)
+			.HAlign(HAlign_Left)
+			.Padding(headerMargin)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("ShadersIncludePathText", "Shaders Include Path"))
+			]
+			+SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				separator
+			]
+			+SHorizontalBox::Slot()
+			.FillWidth(valueWidth)
+			.HAlign(HAlign_Right)
+			.Padding(valueMargin)
+			[
+				SNew(SEditableTextBox)
+				.Font(FAppStyle::GetFontStyle(TEXT("MenuItem.Font")))
+				.Text(this, &SCyberGafferWindowContent::GetShadersIncludePath)
+				.OnTextCommitted(this, &SCyberGafferWindowContent::OnShadersIncludePathCommitted)
+			]
+		]
 	];
 }
 
@@ -276,7 +334,7 @@ void SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged(const 
 	
 	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
 	if (!sceneSettings.IsSet()) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene settings is null"));
+		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene settings is null, scene: %s"), *currentSceneName.GetValue());
 		return;
 	}
 	
@@ -410,7 +468,7 @@ void SCyberGafferWindowContent::SetCurrentSceneName(const FString& newSceneName)
 	}
 }
 
-void SCyberGafferWindowContent::SaveMaterialChanges(TWeakObjectPtr<UMaterialInstance> material) {
+void SCyberGafferWindowContent::SaveMaterialChanges(TWeakObjectPtr<UMaterialInterface> material) {
 	material->PostEditChange();
 	material->MarkPackageDirty();
 
@@ -420,8 +478,69 @@ void SCyberGafferWindowContent::SaveMaterialChanges(TWeakObjectPtr<UMaterialInst
 	FEditorFileUtils::PromptForCheckoutAndSave(packagesToSave, true, /*bPromptToSave=*/ false);
 }
 
+void SCyberGafferWindowContent::SaveMaterialsChanges(TArray<UMaterialInterface*> materials) {
+	TArray<UPackage*> packagesToSave;
+
+	for (auto material : materials) {
+		material->PostEditChange();
+		material->MarkPackageDirty();
+		packagesToSave.Add(material->GetOutermost());
+	}
+
+	FEditorFileUtils::PromptForCheckoutAndSave(packagesToSave, true, /*bPromptToSave=*/ false);
+}
+
 bool SCyberGafferWindowContent::IsPostProcessMaterialValid() const {
 	return _postProcessMaterial.IsValid();
+}
+
+FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostProcessMaterialType type) {
+	auto& assetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	auto materialFactory = NewObject<UMaterialInstanceConstantFactoryNew>();
+
+	FString initialParentPath;
+	switch (type) {
+	case Global: {
+			initialParentPath = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferPostProcess.CyberGafferPostProcess'";
+			break;
+		}
+	case Camera: {
+			initialParentPath = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferCameraPostProcess.CyberGafferCameraPostProcess'";
+			break;
+		}
+	}
+	auto initialParent = Cast<UMaterialInterface>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *initialParentPath));
+	if (initialParent == nullptr) {
+		return FReply::Unhandled();
+	}
+	
+	const auto cyberGafferProjectContentDir = "/Game/Content/CyberGaffer";
+	const auto sceneName = ReadCurrentSceneName();
+	const auto newAssetName = FString::Printf(TEXT("%s_%s"), *initialParent->GetName(), *sceneName.GetValue());
+	
+	materialFactory->InitialParent = initialParent;
+	auto asset = assetTools.CreateAsset(newAssetName, cyberGafferProjectContentDir, UMaterialInstanceConstant::StaticClass(), materialFactory);
+
+	if (asset == nullptr) {
+		return FReply::Unhandled();
+	}
+
+	auto newMaterail = Cast<UMaterialInstanceConstant>(asset);
+
+	switch (type) {
+	case Global: {
+		_postProcessMaterial = newMaterail;
+		OnPostProcessMaterialSelectorValueChanged(newMaterail);
+		break;
+	}
+	case Camera: {
+		_cameraPostProcessMaterial = newMaterail;
+		OnCameraPostProcessMaterialSelectorValueChanged(newMaterail);
+		break;
+	}
+	}
+
+	return FReply::Handled();
 }
 
 FLinearColor SCyberGafferWindowContent::GetColorGradingColor() const {
@@ -454,6 +573,100 @@ void SCyberGafferWindowContent::OnColorGradingValueChanged(FLinearColor color) {
 
 void SCyberGafferWindowContent::OnColorGradingCaptureEnd() {
 	SaveMaterialChanges(_postProcessMaterial);
+}
+
+FText SCyberGafferWindowContent::GetShadersIncludePath() const {
+	if (!_settings) {
+		return FText();
+	}
+
+	return _settings->ShadersIncludePath;
+}
+
+void SCyberGafferWindowContent::OnShadersIncludePathCommitted(const FText& newText, ETextCommit::Type commitType) {
+	if (!_settings) {
+		return;
+	}
+	
+	if (newText.CompareTo(_settings->ShadersIncludePath) == 0) {
+		return;
+	}
+	
+	FString commitTypeStr;
+	switch (commitType)
+	{
+	case ETextCommit::Default:
+		{
+			commitTypeStr = "Default";
+			break;
+		}
+	case ETextCommit::OnCleared:
+		{
+			commitTypeStr = "OnCleared";
+			break;
+		}
+	case ETextCommit::OnEnter:
+		{
+			commitTypeStr = "OnEnter";
+			break;
+		}
+	case ETextCommit::OnUserMovedFocus:
+		{
+			commitTypeStr = "OnUserMovedFocus";
+			break;
+		}
+	}
+	
+	UE_LOG(LogTemp, Log, TEXT("%s"), *commitTypeStr);
+
+	if (!FPaths::DirectoryExists(newText.ToString())) {
+		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnShadersIncludePathCommitted: invalid path"));
+		return;
+	}
+
+	const auto shadersDir = FModuleManager::Get().GetModuleChecked<FCyberGafferModule>("CyberGaffer").GetShaderDirectory();
+	auto shadersIncludePath = FPaths::Combine(shadersDir, "Include");
+	shadersIncludePath = shadersIncludePath.Replace(TEXT("/"), TEXT("\\"));
+	if (FPaths::DirectoryExists(shadersIncludePath)) {
+		const auto command = FString::Printf(TEXT("/c rd \"%s\""), *shadersIncludePath);
+		auto result = FPlatformProcess::CreateProc(TEXT("cmd.exe"), *command, false, true, false, nullptr, 0, nullptr, nullptr, nullptr);
+
+		while (FPlatformProcess::IsProcRunning(result)) {
+			FPlatformProcess::Sleep(0.1f);
+		}
+	}
+
+	if (FPaths::DirectoryExists(shadersIncludePath)) {
+		UE_LOG(LogTemp, Error, TEXT("SCyberGafferWindowContent::OnShadersIncludePathCommitted: failed to delete junction"));
+		return;
+	}
+
+	const auto command = FString::Printf(TEXT("/c mklink /j \"%s\" \"%s\""), *shadersIncludePath, *newText.ToString().Replace(TEXT("/"), TEXT("\\")));
+	UE_LOG(LogTemp, Log, TEXT("%s"), *command);
+	FPlatformProcess::CreateProc(TEXT("cmd.exe"), *command, false, true, false, nullptr, 0, nullptr, nullptr, nullptr);
+
+	_settings->ShadersIncludePath = newText;
+	_settings->SaveConfig();
+
+	TArray<UMaterialInterface*> materials;
+	if (_postProcessMaterial != nullptr) {
+		materials.Add(_postProcessMaterial->GetMaterial());
+		materials.Add(_postProcessMaterial.Get());
+
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_postProcessMaterial->GetMaterial()->GetName()));
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_postProcessMaterial->GetName()));
+	}
+	if (_cameraPostProcessMaterial != nullptr) {
+		materials.Add(_cameraPostProcessMaterial->GetMaterial());
+		materials.Add(_cameraPostProcessMaterial.Get());
+
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_cameraPostProcessMaterial->GetMaterial()->GetName()));
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_cameraPostProcessMaterial->GetName()));
+	}
+
+	SaveMaterialsChanges(materials);
+	
+	// FLevelEditorActionCallbacks::ExecuteExecCommand(TEXT("RECOMPILESHADERS CHANGED"));
 }
 
 

@@ -6,12 +6,14 @@ public class CyberGafferWindow : ModuleRules {
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
+				// "CyberGaffer"
 				// ... add public include paths required here ...
 			}
 		);
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
+				// "CyberGaffer"
 				// ... add other private include paths required here ...
 			}
 		);
@@ -35,7 +37,10 @@ public class CyberGafferWindow : ModuleRules {
 				"Slate",
 				"SlateCore",
 				"PropertyEditor",
-				"AssetRegistry"
+				"AssetRegistry",
+				"AssetTools",
+				"CyberGaffer",
+				"LevelEditor",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

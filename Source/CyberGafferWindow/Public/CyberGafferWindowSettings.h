@@ -29,5 +29,8 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "CyberGaffer|Materials")
 	TMap<FString, FCyberGafferWindowSceneSettings> ScenesSettings;
 
+	UPROPERTY(Config, EditAnywhere, Category = "CyberGaffer|Materials")
+	FText ShadersIncludePath;
+
 	TOptional<FCyberGafferWindowSceneSettings*> GetSettingsForScene(const FString& sceneName);
 };
