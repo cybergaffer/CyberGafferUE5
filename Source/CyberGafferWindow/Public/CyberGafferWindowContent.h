@@ -52,7 +52,7 @@ private:
 	TOptional<FString> GetCurrentSceneName() const;
 	void SetCurrentSceneName(const FString& newSceneName);
 
-	void SaveMaterialChanges(TWeakObjectPtr<UMaterialInterface> material);
+	void SaveMaterialChanges(UMaterialInterface* material);
 	void SaveMaterialsChanges(TArray<UMaterialInterface*> materials);
 
 	FString GetPostProcessMaterialPath() const;

@@ -26,6 +26,7 @@
 #include "Editor/LevelEditor/Public/LevelEditorActions.h"
 #include "AssetToolsModule.h"
 #include "Factories/MaterialInstanceConstantFactoryNew.h"
+#include "Dialogs/Dialogs.h"
 
 #define LOCTEXT_NAMESPACE "FCyberGafferWindowModule"
 
@@ -114,6 +115,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			[
 				SNew(SButton)
 				.Text(LOCTEXT("CreateNewCPPMIText", "Create new camera post process material for scene"))
+				.OnClicked(this, &SCyberGafferWindowContent::CreatePostProcessMaterialInstance, PostProcessMaterialType::Camera)
 			]
 			
 		]
@@ -434,7 +436,7 @@ void SCyberGafferWindowContent::OnExposureCompensationValueChanged(float value) 
 void SCyberGafferWindowContent::OnExposureCompensationValueCommited(const float newValue, ETextCommit::Type commitType) {
 	OnExposureCompensationValueChanged(newValue);
 
-	SaveMaterialChanges(_postProcessMaterial);
+	SaveMaterialChanges(_postProcessMaterial.Get());
 }
 
 TOptional<FString> SCyberGafferWindowContent::ReadCurrentSceneName() {
@@ -468,7 +470,11 @@ void SCyberGafferWindowContent::SetCurrentSceneName(const FString& newSceneName)
 	}
 }
 
-void SCyberGafferWindowContent::SaveMaterialChanges(TWeakObjectPtr<UMaterialInterface> material) {
+void SCyberGafferWindowContent::SaveMaterialChanges(UMaterialInterface* material) {
+	if (material == nullptr) {
+		return;
+	}
+	
 	material->PostEditChange();
 	material->MarkPackageDirty();
 
@@ -514,9 +520,17 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 		return FReply::Unhandled();
 	}
 	
-	const auto cyberGafferProjectContentDir = "/Game/Content/CyberGaffer";
+	const auto cyberGafferProjectContentDir = FString("/Game/CyberGaffer");
 	const auto sceneName = ReadCurrentSceneName();
 	const auto newAssetName = FString::Printf(TEXT("%s_%s"), *initialParent->GetName(), *sceneName.GetValue());
+
+	const auto packagePath = UPackageTools::SanitizePackageName(cyberGafferProjectContentDir + TEXT("/") + newAssetName);
+	
+	const auto newAssetPath = FPaths::Combine(FPaths::ProjectContentDir(), "CyberGaffer", *newAssetName) + ".uasset";
+	if (FPaths::FileExists(newAssetPath)) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FileExistsText", "File already exists"));
+		return FReply::Handled();
+	}
 	
 	materialFactory->InitialParent = initialParent;
 	auto asset = assetTools.CreateAsset(newAssetName, cyberGafferProjectContentDir, UMaterialInstanceConstant::StaticClass(), materialFactory);
@@ -539,6 +553,8 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 		break;
 	}
 	}
+
+	SaveMaterialChanges(newMaterail);
 
 	return FReply::Handled();
 }
@@ -572,7 +588,7 @@ void SCyberGafferWindowContent::OnColorGradingValueChanged(FLinearColor color) {
 }
 
 void SCyberGafferWindowContent::OnColorGradingCaptureEnd() {
-	SaveMaterialChanges(_postProcessMaterial);
+	SaveMaterialChanges(_postProcessMaterial.Get());
 }
 
 FText SCyberGafferWindowContent::GetShadersIncludePath() const {
