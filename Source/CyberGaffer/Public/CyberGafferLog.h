@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "HAL/IConsoleManager.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(CyberGafferLog, Log, All);
+CYBERGAFFER_API DECLARE_LOG_CATEGORY_EXTERN(CyberGafferLog, Log, All);
 
 static TAutoConsoleVariable<int32> CVarEnableCyberGafferLogging(
 	TEXT("CyberGaffer.EnableDeveloperLogging"),

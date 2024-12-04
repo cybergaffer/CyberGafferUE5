@@ -37,8 +37,9 @@ private:
 	
 	TWeakPtr<SDockTab> _containingTab;
 
-	TOptional<FString> _currentSceneName;
-	mutable FCriticalSection _currentSceneNameCriticalSection;
+	// TOptional<FString> _currentSceneName;
+	// mutable FCriticalSection _currentSceneNameCriticalSection;
+	FDelegateHandle _currentSceneChangedDelegateHandle;
 
 	TWeakObjectPtr<UMaterialInstance> _postProcessMaterial;
 	TWeakObjectPtr<UMaterialInstance> _cameraPostProcessMaterial;
@@ -46,11 +47,14 @@ private:
 	TSharedPtr<SObjectPropertyEntryBox> _postProcessMaterialSelector;
 	TSharedPtr<SObjectPropertyEntryBox> _cameraPostProcessMaterialSelector;
 
+	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
+
 	static UMaterialInstance* LoadMaterialUsingPath(const FString& path);
 
 	TOptional<FString> ReadCurrentSceneName();
-	TOptional<FString> GetCurrentSceneName() const;
-	void SetCurrentSceneName(const FString& newSceneName);
+	// TOptional<FString> GetCurrentSceneName() const;
+	// void SetCurrentSceneName(const FString& newSceneName);
+	void OnSceneChanged(const FString& filename, bool asTemplate);
 
 	void SaveMaterialChanges(UMaterialInterface* material);
 	void SaveMaterialsChanges(TArray<UMaterialInterface*> materials);

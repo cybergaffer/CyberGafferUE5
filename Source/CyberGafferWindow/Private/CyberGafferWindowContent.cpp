@@ -2,6 +2,8 @@
 
 
 #include "CyberGafferWindowContent.h"
+#include "CyberGafferWindow.h"
+#include "CyberGafferLog.h"
 
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SBoxPanel.h"
@@ -46,17 +48,14 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 
 	_settings = TStrongObjectPtr<UCyberGafferWindowSettings>(NewObject<UCyberGafferWindowSettings>());
 
-	ReadCurrentSceneName();
+	OnSceneChanged(FString(""), false);
 
-	if (_currentSceneName.IsSet()) {
-		auto sceneSettings = _settings->ScenesSettings.Find(_currentSceneName.GetValue());
-		if (sceneSettings) {
-			_postProcessMaterial = LoadMaterialUsingPath(sceneSettings->PostProcessMaterial);
-			_cameraPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->CameraPostProcessMaterial);
-		} else {
-			_settings->ScenesSettings.Add(_currentSceneName.GetValue(), FCyberGafferWindowSceneSettings());
-			_settings->SaveConfig();
-		}
+	_containingTab = args.__containingTab;
+
+	_currentSceneChangedDelegateHandle = FEditorDelegates::OnMapOpened.AddRaw(this, &SCyberGafferWindowContent::OnSceneChanged);
+	auto tab = _containingTab.Pin();
+	if (tab.IsValid()) {
+		tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &SCyberGafferWindowContent::OnParentTabClosed));
 	}
 	
 	_postProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
@@ -280,14 +279,24 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 	];
 }
 
-// void SCyberGafferWindowContent::OnPropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent) {
-// 	const auto name = propertyChangedEvent.GetMemberPropertyName();
-// 	UE_LOG(LogTemp, Log, TEXT("%s"), *name.ToString());
-// }
+void SCyberGafferWindowContent::OnParentTabClosed(TSharedRef<SDockTab> parentTab) {
+	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnParentTabClosed"));
+
+	auto currentTab = _containingTab.Pin();
+	if (currentTab.IsValid()) {
+		if (currentTab == parentTab) {
+			FEditorDelegates::OnMapOpened.Remove(_currentSceneChangedDelegateHandle);
+		} else {
+			CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnParentTabClosed: tab mismatch"));
+		}
+	} else {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnParentTabClosed: current tab is invalid"));
+	}
+}
 
 UMaterialInstance* SCyberGafferWindowContent::LoadMaterialUsingPath(const FString& path) {
 	if (path.IsEmpty()) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::LoadMaterialUsingPath: path is empty"));
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::LoadMaterialUsingPath: path is empty"));
 		return nullptr;
 	}
 	
@@ -297,29 +306,12 @@ UMaterialInstance* SCyberGafferWindowContent::LoadMaterialUsingPath(const FStrin
 	if (module.Get().TryGetAssetByObjectPath(objectPath, assetData) == UE::AssetRegistry::EExists::Exists) {
 		return Cast<UMaterialInstance>(assetData.GetAsset());
 	}
-	UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::LoadMaterialUsingPath: failed to load asset at path %s"), *path);
+	
+	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::LoadMaterialUsingPath: failed to load asset at path %s"), *path);
 	return nullptr;
 }
 
 FString SCyberGafferWindowContent::GetPostProcessMaterialPath() const {
-	// auto currentSceneName = GetCurrentSceneName();
-	// if (!currentSceneName.IsSet()) {
-	// 	UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::GetPostProcessMaterialPath: current scene name is null"));
-	// 	return FString();
-	// }
-	//
-	// auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
-	// if (!sceneSettings.IsSet()) {
-	// 	UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::GetPostProcessMaterialPath: current scene settings is null"));
-	// 	return FString();
-	// }
-	//
-	// auto postProcessMaterial = sceneSettings.GetValue().PostProcessMaterial;
-	//
-	// if (postProcessMaterial != nullptr) {
-	// 	return postProcessMaterial->GetPathName();
-	// }
-
 	if (_postProcessMaterial.IsValid()) {
 		return _postProcessMaterial->GetPathName();
 	}
@@ -328,25 +320,23 @@ FString SCyberGafferWindowContent::GetPostProcessMaterialPath() const {
 }
 
 void SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged(const FAssetData& assetData) {
-	auto currentSceneName = GetCurrentSceneName();
+	const auto currentSceneName = ReadCurrentSceneName();
 	if (!currentSceneName.IsSet()) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene name is null"));
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene name is null"));
 		return;
 	}
 	
 	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
 	if (!sceneSettings.IsSet()) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene settings is null, scene: %s"), *currentSceneName.GetValue());
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene settings is null, scene: %s"), *currentSceneName.GetValue());
 		return;
 	}
 	
 	UMaterialInstance* materialInstance = Cast<UMaterialInstance>(assetData.GetAsset());
 	if (materialInstance) {
-		// _postProcessMaterial = MakeWeakObjectPtr<UMaterialInstance>(materialInstance);
 		auto materialPath = materialInstance->GetPathName();
 		sceneSettings.GetValue()->PostProcessMaterial = materialPath;
 	} else {
-		// _postProcessMaterial = nullptr;
 		sceneSettings.GetValue()->PostProcessMaterial = "";
 	}
 	_settings->SaveConfig();
@@ -355,24 +345,6 @@ void SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged(const 
 }
 
 FString SCyberGafferWindowContent::GetCameraPostProcessMaterialPath() const {
-	// auto currentSceneName = GetCurrentSceneName();
-	// if (!currentSceneName.IsSet()) {
-	// 	UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::GetCameraPostProcessMaterialPath: current scene name is null"));
-	// 	return FString();
-	// }
-	//
-	// auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
-	// if (!sceneSettings.IsSet()) {
-	// 	UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::GetCameraPostProcessMaterialPath: current scene settings is null"));
-	// 	return FString();
-	// }
-	//
-	// auto cameraPostProcessMaterial = sceneSettings.GetValue().CameraPostProcessMaterial;
-	//
-	// if (cameraPostProcessMaterial != nullptr) {
-	// 	return cameraPostProcessMaterial->GetPathName();
-	// }
-
 	if (_cameraPostProcessMaterial.IsValid()) {
 		return _cameraPostProcessMaterial->GetPathName();
 	}
@@ -381,24 +353,22 @@ FString SCyberGafferWindowContent::GetCameraPostProcessMaterialPath() const {
 }
 
 void SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged(const FAssetData& assetData) {
-	auto currentSceneName = GetCurrentSceneName();
+	const auto currentSceneName = ReadCurrentSceneName();
 	if (!currentSceneName.IsSet()) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged: current scene name is null"));
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged: current scene name is null"));
 		return;
 	}
 	
 	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
 	if (!sceneSettings.IsSet()) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged: current scene settings is null"));
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged: current scene settings is null"));
 		return;
 	}
 	
 	UMaterialInstance* materialInstance = Cast<UMaterialInstance>(assetData.GetAsset());
 	if (materialInstance) {
-		// _cameraPostProcessMaterial = MakeWeakObjectPtr<UMaterialInstance>(materialInstance);
 		sceneSettings.GetValue()->CameraPostProcessMaterial = materialInstance->GetPathName();
 	} else {
-		// _cameraPostProcessMaterial = nullptr;
 		sceneSettings.GetValue()->CameraPostProcessMaterial = "";
 	}
 	_settings->SaveConfig();
@@ -410,6 +380,7 @@ TOptional<float> SCyberGafferWindowContent::GetExposureCompensation() const {
 	if (!IsPostProcessMaterialValid()) {
 		return 0.0f;
 	}
+	
 	FMemoryImageMaterialParameterInfo parameterInfo(TEXT("Expose Compensation"));
 	FMaterialParameterMetadata metadata;
 	const auto callResult = _postProcessMaterial->GetParameterValue(EMaterialParameterType::Scalar, parameterInfo, metadata);
@@ -417,7 +388,6 @@ TOptional<float> SCyberGafferWindowContent::GetExposureCompensation() const {
 	if (callResult) {
 		return metadata.Value.AsScalar();
 	}
-
 	return 0.0f;
 }
 
@@ -435,7 +405,6 @@ void SCyberGafferWindowContent::OnExposureCompensationValueChanged(float value) 
 
 void SCyberGafferWindowContent::OnExposureCompensationValueCommited(const float newValue, ETextCommit::Type commitType) {
 	OnExposureCompensationValueChanged(newValue);
-
 	SaveMaterialChanges(_postProcessMaterial.Get());
 }
 
@@ -449,24 +418,21 @@ TOptional<FString> SCyberGafferWindowContent::ReadCurrentSceneName() {
 	if (sceneName.IsEmpty()) {
 		return TOptional<FString>();
 	}
-
-	auto sceneBaseName = FPaths::GetBaseFilename(sceneName);
-	SetCurrentSceneName(sceneName);
 	
-	return sceneBaseName;
+	return FPaths::GetBaseFilename(sceneName);
 }
 
-TOptional<FString> SCyberGafferWindowContent::GetCurrentSceneName() const {
-	FScopeLock lock(&_currentSceneNameCriticalSection);
-	return _currentSceneName;
-}
-
-void SCyberGafferWindowContent::SetCurrentSceneName(const FString& newSceneName) {
-	FScopeLock lock(&_currentSceneNameCriticalSection);
-	if (newSceneName.IsEmpty()) {
-		_currentSceneName.Reset();
-	} else {
-		_currentSceneName = newSceneName;
+void SCyberGafferWindowContent::OnSceneChanged(const FString& filename, bool asTemplate) {
+	const auto sceneName = ReadCurrentSceneName();
+	if (sceneName.IsSet()) {
+		auto sceneSettings = _settings->ScenesSettings.Find(sceneName.GetValue());
+		if (sceneSettings) {
+			_postProcessMaterial = LoadMaterialUsingPath(sceneSettings->PostProcessMaterial);
+			_cameraPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->CameraPostProcessMaterial);
+		} else {
+			_settings->ScenesSettings.Add(sceneName.GetValue(), FCyberGafferWindowSceneSettings());
+			_settings->SaveConfig();
+		}
 	}
 }
 
@@ -515,6 +481,7 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 			break;
 		}
 	}
+	
 	auto initialParent = Cast<UMaterialInterface>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *initialParentPath));
 	if (initialParent == nullptr) {
 		return FReply::Unhandled();
@@ -534,7 +501,6 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 	
 	materialFactory->InitialParent = initialParent;
 	auto asset = assetTools.CreateAsset(newAssetName, cyberGafferProjectContentDir, UMaterialInstanceConstant::StaticClass(), materialFactory);
-
 	if (asset == nullptr) {
 		return FReply::Unhandled();
 	}
@@ -607,36 +573,9 @@ void SCyberGafferWindowContent::OnShadersIncludePathCommitted(const FText& newTe
 	if (newText.CompareTo(_settings->ShadersIncludePath) == 0) {
 		return;
 	}
-	
-	FString commitTypeStr;
-	switch (commitType)
-	{
-	case ETextCommit::Default:
-		{
-			commitTypeStr = "Default";
-			break;
-		}
-	case ETextCommit::OnCleared:
-		{
-			commitTypeStr = "OnCleared";
-			break;
-		}
-	case ETextCommit::OnEnter:
-		{
-			commitTypeStr = "OnEnter";
-			break;
-		}
-	case ETextCommit::OnUserMovedFocus:
-		{
-			commitTypeStr = "OnUserMovedFocus";
-			break;
-		}
-	}
-	
-	UE_LOG(LogTemp, Log, TEXT("%s"), *commitTypeStr);
 
 	if (!FPaths::DirectoryExists(newText.ToString())) {
-		UE_LOG(LogTemp, Log, TEXT("SCyberGafferWindowContent::OnShadersIncludePathCommitted: invalid path"));
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnShadersIncludePathCommitted: invalid path"));
 		return;
 	}
 
@@ -653,12 +592,11 @@ void SCyberGafferWindowContent::OnShadersIncludePathCommitted(const FText& newTe
 	}
 
 	if (FPaths::DirectoryExists(shadersIncludePath)) {
-		UE_LOG(LogTemp, Error, TEXT("SCyberGafferWindowContent::OnShadersIncludePathCommitted: failed to delete junction"));
+		CYBERGAFFER_LOG(Error, TEXT("SCyberGafferWindowContent::OnShadersIncludePathCommitted: failed to delete junction"));
 		return;
 	}
 
 	const auto command = FString::Printf(TEXT("/c mklink /j \"%s\" \"%s\""), *shadersIncludePath, *newText.ToString().Replace(TEXT("/"), TEXT("\\")));
-	UE_LOG(LogTemp, Log, TEXT("%s"), *command);
 	FPlatformProcess::CreateProc(TEXT("cmd.exe"), *command, false, true, false, nullptr, 0, nullptr, nullptr, nullptr);
 
 	_settings->ShadersIncludePath = newText;
