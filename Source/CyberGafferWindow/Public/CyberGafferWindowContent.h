@@ -12,8 +12,8 @@
 #include "HAL/CriticalSection.h"
 
 enum PostProcessMaterialType {
-	Global,
-	Camera
+	Linear,
+	ColorGrading
 };
 
 /**
@@ -34,36 +34,32 @@ public:
 
 private:
 	TStrongObjectPtr<UCyberGafferWindowSettings> _settings;
-	
 	TWeakPtr<SDockTab> _containingTab;
-
-	// TOptional<FString> _currentSceneName;
-	// mutable FCriticalSection _currentSceneNameCriticalSection;
 	FDelegateHandle _currentSceneChangedDelegateHandle;
-
-	TWeakObjectPtr<UMaterialInstance> _postProcessMaterial;
-	TWeakObjectPtr<UMaterialInstance> _cameraPostProcessMaterial;
-	
-	TSharedPtr<SObjectPropertyEntryBox> _postProcessMaterialSelector;
-	TSharedPtr<SObjectPropertyEntryBox> _cameraPostProcessMaterialSelector;
 
 	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
 
 	static UMaterialInstance* LoadMaterialUsingPath(const FString& path);
 
-	TOptional<FString> ReadCurrentSceneName();
-	// TOptional<FString> GetCurrentSceneName() const;
-	// void SetCurrentSceneName(const FString& newSceneName);
+	TOptional<FString> GetCurrentSceneName();
 	void OnSceneChanged(const FString& filename, bool asTemplate);
 
-	void SaveMaterialChanges(UMaterialInterface* material);
-	void SaveMaterialsChanges(TArray<UMaterialInterface*> materials);
+	FReply CreatePostProcessMaterialInstance(const PostProcessMaterialType type);
 
-	FString GetPostProcessMaterialPath() const;
-	void OnPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
+	// Linear post process material controls
+	TWeakObjectPtr<UMaterialInstance> _linearPostProcessMaterial;
+	TSharedPtr<SObjectPropertyEntryBox> _linearPostProcessMaterialSelector;
 	
-	FString GetCameraPostProcessMaterialPath() const;
-	void OnCameraPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
+	FString GetLinearPostProcessMaterialPath() const;
+	void OnLinearPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
+	// Linear post process material controls end
+	
+	// Color grading post process material controls
+	TWeakObjectPtr<UMaterialInstance> _colorGradingPostProcessMaterial;
+	TSharedPtr<SObjectPropertyEntryBox> _colorGradingPostProcessMaterialSelector;
+	
+	FString GetColorGradingPostProcessMaterialPath() const;
+	void OnColorGradingPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
 
 	TOptional<float> GetExposureCompensation() const;
 	void OnExposureCompensationValueChanged(float value);
@@ -73,10 +69,14 @@ private:
 	void OnColorGradingValueChanged(FLinearColor color);
 	void OnColorGradingCaptureEnd();
 
+	bool IsColorGradingPostProcessMaterialValid() const;
+	// Color grading post process material controls end
+
 	FText GetShadersIncludePath() const;
 	void OnShadersIncludePathCommitted(const FText& newText, ETextCommit::Type commitType);
 
-	bool IsPostProcessMaterialValid() const;
+	void SaveMaterialChanges(UMaterialInterface* material);
+	void SaveMaterialsChanges(const TArray<UMaterialInterface*>& materials);
 
-	FReply CreatePostProcessMaterialInstance(const PostProcessMaterialType type);
+	FReply RecompileShaders();
 };

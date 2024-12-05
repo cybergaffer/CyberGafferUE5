@@ -11,14 +11,14 @@ struct FCyberGafferWindowSceneSettings {
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, Category = "CyberGaffer|Materials")
-	FString PostProcessMaterial;
+	FString LinearPostProcessMaterial;
 
 	UPROPERTY(EditAnywhere, Category = "CyberGaffer|Materials")
-	FString CameraPostProcessMaterial;
+	FString ColorGradingPostProcessMaterial;
 
-	FCyberGafferWindowSceneSettings() : PostProcessMaterial(""), CameraPostProcessMaterial("") {}
-	FCyberGafferWindowSceneSettings(const FString& postProcessMaterial, const FString& cameraPostProcessMaterial)
-		: PostProcessMaterial(postProcessMaterial), CameraPostProcessMaterial(cameraPostProcessMaterial) {}
+	FCyberGafferWindowSceneSettings() : LinearPostProcessMaterial(""), ColorGradingPostProcessMaterial("") {}
+	FCyberGafferWindowSceneSettings(const FString& linearPostProcessMaterial, const FString& colorGradingPostProcessMaterial)
+		: LinearPostProcessMaterial(linearPostProcessMaterial), ColorGradingPostProcessMaterial(colorGradingPostProcessMaterial) {}
 };
 
 UCLASS(Config=CyberGafferWindow)

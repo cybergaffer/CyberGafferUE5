@@ -58,21 +58,21 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &SCyberGafferWindowContent::OnParentTabClosed));
 	}
 	
-	_postProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
-		.ObjectPath(this, &SCyberGafferWindowContent::GetPostProcessMaterialPath)
+	_linearPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
+		.ObjectPath(this, &SCyberGafferWindowContent::GetLinearPostProcessMaterialPath)
 		.DisplayBrowse(true)
 		.DisplayThumbnail(true)
 		.AllowedClass(UMaterialInstance::StaticClass())
 		.EnableContentPicker(true)
-		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged));
+		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnLinearPostProcessMaterialSelectorValueChanged));
 	
-	_cameraPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
-		.ObjectPath(this, &SCyberGafferWindowContent::GetCameraPostProcessMaterialPath)
+	_colorGradingPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
+		.ObjectPath(this, &SCyberGafferWindowContent::GetColorGradingPostProcessMaterialPath)
 		.DisplayBrowse(true)
 		.DisplayThumbnail(true)
 		.AllowedClass(UMaterialInstance::StaticClass())
 		.EnableContentPicker(true)
-		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged));
+		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnColorGradingPostProcessMaterialSelectorValueChanged));
 
 	auto separator = SNew(SSeparator).Orientation(Orient_Vertical);
 
@@ -93,13 +93,13 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		[
 			SNew(SHorizontalBox)
 			+SHorizontalBox::Slot()
-			.FillWidth(headerWidth)
+			.AutoWidth()
 			.HAlign(HAlign_Center)
 			.Padding(headerMargin)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("CreateNewPPMIText", "Create new post process material for scene"))
-				.OnClicked(this, &SCyberGafferWindowContent::CreatePostProcessMaterialInstance, PostProcessMaterialType::Global)
+				.Text(LOCTEXT("NewLinearPPMIText", "New post linear process material for scene"))
+				.OnClicked(this, &SCyberGafferWindowContent::CreatePostProcessMaterialInstance, PostProcessMaterialType::Linear)
 			]
 		]
 		+SVerticalBox::Slot()
@@ -108,13 +108,13 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		[
 			SNew(SHorizontalBox)
 			+SHorizontalBox::Slot()
-			.FillWidth(headerWidth)
+			.AutoWidth()
 			.HAlign(HAlign_Center)
 			.Padding(headerMargin)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("CreateNewCPPMIText", "Create new camera post process material for scene"))
-				.OnClicked(this, &SCyberGafferWindowContent::CreatePostProcessMaterialInstance, PostProcessMaterialType::Camera)
+				.Text(LOCTEXT("NewColorGradingPPMIText", "New color grading post process material for scene"))
+				.OnClicked(this, &SCyberGafferWindowContent::CreatePostProcessMaterialInstance, PostProcessMaterialType::ColorGrading)
 			]
 			
 		]
@@ -129,7 +129,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			.Padding(headerMargin)
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("PostProcessMaterialText", "Post Process Material"))
+				.Text(LOCTEXT("LinearPostProcessMaterialText", "Linear Post Process Material"))
 			]
 			+SHorizontalBox::Slot()
 			.AutoWidth()
@@ -141,7 +141,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			.HAlign(HAlign_Right)
 			.Padding(valueMargin)
 			[
-				_postProcessMaterialSelector.ToSharedRef()
+				_linearPostProcessMaterialSelector.ToSharedRef()
 			]
 		]
 		+SVerticalBox::Slot()
@@ -155,7 +155,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			.Padding(headerMargin)
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("PostProcessMaterialText", "Camera Post Process Material"))
+				.Text(LOCTEXT("ColorGradingPostProcessMaterialText", "Color Grading Post Process Material"))
 			]
 			+SHorizontalBox::Slot()
 			.AutoWidth()
@@ -167,7 +167,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			.HAlign(HAlign_Right)
 			.Padding(valueMargin)
 			[
-				_cameraPostProcessMaterialSelector.ToSharedRef()
+				_colorGradingPostProcessMaterialSelector.ToSharedRef()
 			]
 		]
 		+SVerticalBox::Slot()
@@ -213,7 +213,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.OnValueChanged(this, &SCyberGafferWindowContent::OnExposureCompensationValueChanged)
 				.OnValueCommitted(this, &SCyberGafferWindowContent::OnExposureCompensationValueCommited)
 				.ToolTipText(LOCTEXT("ExposureCompensationText", "Exposure Compensation"))
-				.IsEnabled(this, &SCyberGafferWindowContent::IsPostProcessMaterialValid)
+				.IsEnabled(this, &SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid)
 			]
 		]
 		+SVerticalBox::Slot()
@@ -244,7 +244,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.OnValueChanged(this, &SCyberGafferWindowContent::OnColorGradingValueChanged)
 				.OnMouseCaptureEnd(this, &SCyberGafferWindowContent::OnColorGradingCaptureEnd)
 				.ToolTipText(LOCTEXT("ExposureCompensationText", "Exposure Compensation"))
-				.IsEnabled(this, &SCyberGafferWindowContent::IsPostProcessMaterialValid)
+				.IsEnabled(this, &SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid)
 			]
 		]
 		+SVerticalBox::Slot()
@@ -275,6 +275,22 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.Text(this, &SCyberGafferWindowContent::GetShadersIncludePath)
 				.OnTextCommitted(this, &SCyberGafferWindowContent::OnShadersIncludePathCommitted)
 			]
+		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.AutoWidth()
+			.HAlign(HAlign_Center)
+			.Padding(headerMargin)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("RecompileShadersText", "Recompile Shaders"))
+				.OnClicked(this, &SCyberGafferWindowContent::RecompileShaders)
+			]
+			
 		]
 	];
 }
@@ -311,104 +327,7 @@ UMaterialInstance* SCyberGafferWindowContent::LoadMaterialUsingPath(const FStrin
 	return nullptr;
 }
 
-FString SCyberGafferWindowContent::GetPostProcessMaterialPath() const {
-	if (_postProcessMaterial.IsValid()) {
-		return _postProcessMaterial->GetPathName();
-	}
-
-	return FString();
-}
-
-void SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged(const FAssetData& assetData) {
-	const auto currentSceneName = ReadCurrentSceneName();
-	if (!currentSceneName.IsSet()) {
-		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene name is null"));
-		return;
-	}
-	
-	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
-	if (!sceneSettings.IsSet()) {
-		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnPostProcessMaterialSelectorValueChanged: current scene settings is null, scene: %s"), *currentSceneName.GetValue());
-		return;
-	}
-	
-	UMaterialInstance* materialInstance = Cast<UMaterialInstance>(assetData.GetAsset());
-	if (materialInstance) {
-		auto materialPath = materialInstance->GetPathName();
-		sceneSettings.GetValue()->PostProcessMaterial = materialPath;
-	} else {
-		sceneSettings.GetValue()->PostProcessMaterial = "";
-	}
-	_settings->SaveConfig();
-	
-	_postProcessMaterial = materialInstance;
-}
-
-FString SCyberGafferWindowContent::GetCameraPostProcessMaterialPath() const {
-	if (_cameraPostProcessMaterial.IsValid()) {
-		return _cameraPostProcessMaterial->GetPathName();
-	}
-
-	return FString();
-}
-
-void SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged(const FAssetData& assetData) {
-	const auto currentSceneName = ReadCurrentSceneName();
-	if (!currentSceneName.IsSet()) {
-		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged: current scene name is null"));
-		return;
-	}
-	
-	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
-	if (!sceneSettings.IsSet()) {
-		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnCameraPostProcessMaterialSelectorValueChanged: current scene settings is null"));
-		return;
-	}
-	
-	UMaterialInstance* materialInstance = Cast<UMaterialInstance>(assetData.GetAsset());
-	if (materialInstance) {
-		sceneSettings.GetValue()->CameraPostProcessMaterial = materialInstance->GetPathName();
-	} else {
-		sceneSettings.GetValue()->CameraPostProcessMaterial = "";
-	}
-	_settings->SaveConfig();
-	
-	_cameraPostProcessMaterial = materialInstance;
-}
-
-TOptional<float> SCyberGafferWindowContent::GetExposureCompensation() const {
-	if (!IsPostProcessMaterialValid()) {
-		return 0.0f;
-	}
-	
-	FMemoryImageMaterialParameterInfo parameterInfo(TEXT("Expose Compensation"));
-	FMaterialParameterMetadata metadata;
-	const auto callResult = _postProcessMaterial->GetParameterValue(EMaterialParameterType::Scalar, parameterInfo, metadata);
-	
-	if (callResult) {
-		return metadata.Value.AsScalar();
-	}
-	return 0.0f;
-}
-
-void SCyberGafferWindowContent::OnExposureCompensationValueChanged(float value) {
-	if (!IsPostProcessMaterialValid()) {
-		return;
-	}
-
-	auto instanceConstant = Cast<UMaterialInstanceConstant>(_postProcessMaterial);
-	FMaterialParameterInfo parameterInfo(TEXT("Expose Compensation"));
-	if (instanceConstant) {
-		instanceConstant->SetScalarParameterValueEditorOnly(parameterInfo, value);
-	}
-}
-
-void SCyberGafferWindowContent::OnExposureCompensationValueCommited(const float newValue, ETextCommit::Type commitType) {
-	OnExposureCompensationValueChanged(newValue);
-	SaveMaterialChanges(_postProcessMaterial.Get());
-}
-
-TOptional<FString> SCyberGafferWindowContent::ReadCurrentSceneName() {
+TOptional<FString> SCyberGafferWindowContent::GetCurrentSceneName() {
 	auto world = GEditor->GetEditorWorldContext().World();
 	if (!world) {
 		return TOptional<FString>();
@@ -423,47 +342,17 @@ TOptional<FString> SCyberGafferWindowContent::ReadCurrentSceneName() {
 }
 
 void SCyberGafferWindowContent::OnSceneChanged(const FString& filename, bool asTemplate) {
-	const auto sceneName = ReadCurrentSceneName();
+	const auto sceneName = GetCurrentSceneName();
 	if (sceneName.IsSet()) {
 		auto sceneSettings = _settings->ScenesSettings.Find(sceneName.GetValue());
 		if (sceneSettings) {
-			_postProcessMaterial = LoadMaterialUsingPath(sceneSettings->PostProcessMaterial);
-			_cameraPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->CameraPostProcessMaterial);
+			_linearPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->LinearPostProcessMaterial);
+			_colorGradingPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->ColorGradingPostProcessMaterial);
 		} else {
 			_settings->ScenesSettings.Add(sceneName.GetValue(), FCyberGafferWindowSceneSettings());
 			_settings->SaveConfig();
 		}
 	}
-}
-
-void SCyberGafferWindowContent::SaveMaterialChanges(UMaterialInterface* material) {
-	if (material == nullptr) {
-		return;
-	}
-	
-	material->PostEditChange();
-	material->MarkPackageDirty();
-
-	TArray<UPackage*> packagesToSave;
-	packagesToSave.Add(material->GetOutermost());
-
-	FEditorFileUtils::PromptForCheckoutAndSave(packagesToSave, true, /*bPromptToSave=*/ false);
-}
-
-void SCyberGafferWindowContent::SaveMaterialsChanges(TArray<UMaterialInterface*> materials) {
-	TArray<UPackage*> packagesToSave;
-
-	for (auto material : materials) {
-		material->PostEditChange();
-		material->MarkPackageDirty();
-		packagesToSave.Add(material->GetOutermost());
-	}
-
-	FEditorFileUtils::PromptForCheckoutAndSave(packagesToSave, true, /*bPromptToSave=*/ false);
-}
-
-bool SCyberGafferWindowContent::IsPostProcessMaterialValid() const {
-	return _postProcessMaterial.IsValid();
 }
 
 FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostProcessMaterialType type) {
@@ -472,12 +361,12 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 
 	FString initialParentPath;
 	switch (type) {
-	case Global: {
-			initialParentPath = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferPostProcess.CyberGafferPostProcess'";
+	case Linear: {
+			initialParentPath = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferLinearPostProcess.CyberGafferLinearPostProcess'";
 			break;
 		}
-	case Camera: {
-			initialParentPath = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferCameraPostProcess.CyberGafferCameraPostProcess'";
+	case ColorGrading: {
+			initialParentPath = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferColorGradingPostProcess.CyberGafferColorGradingPostProcess'";
 			break;
 		}
 	}
@@ -488,7 +377,7 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 	}
 	
 	const auto cyberGafferProjectContentDir = FString("/Game/CyberGaffer");
-	const auto sceneName = ReadCurrentSceneName();
+	const auto sceneName = GetCurrentSceneName();
 	const auto newAssetName = FString::Printf(TEXT("%s_%s"), *initialParent->GetName(), *sceneName.GetValue());
 
 	const auto packagePath = UPackageTools::SanitizePackageName(cyberGafferProjectContentDir + TEXT("/") + newAssetName);
@@ -508,14 +397,14 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 	auto newMaterail = Cast<UMaterialInstanceConstant>(asset);
 
 	switch (type) {
-	case Global: {
-		_postProcessMaterial = newMaterail;
-		OnPostProcessMaterialSelectorValueChanged(newMaterail);
+	case Linear: {
+		_linearPostProcessMaterial = newMaterail;
+		OnLinearPostProcessMaterialSelectorValueChanged(newMaterail);
 		break;
 	}
-	case Camera: {
-		_cameraPostProcessMaterial = newMaterail;
-		OnCameraPostProcessMaterialSelectorValueChanged(newMaterail);
+	case ColorGrading: {
+		_colorGradingPostProcessMaterial = newMaterail;
+		OnColorGradingPostProcessMaterialSelectorValueChanged(newMaterail);
 		break;
 	}
 	}
@@ -525,14 +414,111 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance(const PostPr
 	return FReply::Handled();
 }
 
+FString SCyberGafferWindowContent::GetLinearPostProcessMaterialPath() const {
+	if (_linearPostProcessMaterial.IsValid()) {
+		return _linearPostProcessMaterial->GetPathName();
+	}
+
+	return FString();
+}
+
+void SCyberGafferWindowContent::OnLinearPostProcessMaterialSelectorValueChanged(const FAssetData& assetData) {
+	const auto currentSceneName = GetCurrentSceneName();
+	if (!currentSceneName.IsSet()) {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnLinearPostProcessMaterialSelectorValueChanged: current scene name is null"));
+		return;
+	}
+	
+	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
+	if (!sceneSettings.IsSet()) {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnLinearPostProcessMaterialSelectorValueChanged: current scene settings is null, scene: %s"), *currentSceneName.GetValue());
+		return;
+	}
+	
+	UMaterialInstance* materialInstance = Cast<UMaterialInstance>(assetData.GetAsset());
+	if (materialInstance) {
+		auto materialPath = materialInstance->GetPathName();
+		sceneSettings.GetValue()->LinearPostProcessMaterial = materialPath;
+	} else {
+		sceneSettings.GetValue()->LinearPostProcessMaterial = "";
+	}
+	_settings->SaveConfig();
+	
+	_linearPostProcessMaterial = materialInstance;
+}
+
+FString SCyberGafferWindowContent::GetColorGradingPostProcessMaterialPath() const {
+	if (_colorGradingPostProcessMaterial.IsValid()) {
+		return _colorGradingPostProcessMaterial->GetPathName();
+	}
+
+	return FString();
+}
+
+void SCyberGafferWindowContent::OnColorGradingPostProcessMaterialSelectorValueChanged(const FAssetData& assetData) {
+	const auto currentSceneName = GetCurrentSceneName();
+	if (!currentSceneName.IsSet()) {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnColorGradingPostProcessMaterialSelectorValueChanged: current scene name is null"));
+		return;
+	}
+	
+	auto sceneSettings = _settings->GetSettingsForScene(currentSceneName.GetValue());
+	if (!sceneSettings.IsSet()) {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnColorGradingPostProcessMaterialSelectorValueChanged: current scene settings is null"));
+		return;
+	}
+	
+	UMaterialInstance* materialInstance = Cast<UMaterialInstance>(assetData.GetAsset());
+	if (materialInstance) {
+		sceneSettings.GetValue()->ColorGradingPostProcessMaterial = materialInstance->GetPathName();
+	} else {
+		sceneSettings.GetValue()->ColorGradingPostProcessMaterial = "";
+	}
+	_settings->SaveConfig();
+	
+	_colorGradingPostProcessMaterial = materialInstance;
+}
+
+TOptional<float> SCyberGafferWindowContent::GetExposureCompensation() const {
+	if (!IsColorGradingPostProcessMaterialValid()) {
+		return 0.0f;
+	}
+	
+	FMemoryImageMaterialParameterInfo parameterInfo(TEXT("Expose Compensation"));
+	FMaterialParameterMetadata metadata;
+	const auto callResult = _colorGradingPostProcessMaterial->GetParameterValue(EMaterialParameterType::Scalar, parameterInfo, metadata);
+	
+	if (callResult) {
+		return metadata.Value.AsScalar();
+	}
+	return 0.0f;
+}
+
+void SCyberGafferWindowContent::OnExposureCompensationValueChanged(float value) {
+	if (!IsColorGradingPostProcessMaterialValid()) {
+		return;
+	}
+
+	auto instanceConstant = Cast<UMaterialInstanceConstant>(_colorGradingPostProcessMaterial);
+	if (instanceConstant) {
+		FMaterialParameterInfo parameterInfo(TEXT("Expose Compensation"));
+		instanceConstant->SetScalarParameterValueEditorOnly(parameterInfo, value);
+	}
+}
+
+void SCyberGafferWindowContent::OnExposureCompensationValueCommited(const float newValue, ETextCommit::Type commitType) {
+	OnExposureCompensationValueChanged(newValue);
+	SaveMaterialChanges(_colorGradingPostProcessMaterial.Get());
+}
+
 FLinearColor SCyberGafferWindowContent::GetColorGradingColor() const {
-	if (!IsPostProcessMaterialValid()) {
+	if (!IsColorGradingPostProcessMaterialValid()) {
 		return FLinearColor::White;
 	}
 
 	FMemoryImageMaterialParameterInfo parameterInfo(TEXT("Multiplier"));
 	FMaterialParameterMetadata metadata;
-	const auto callResult = _postProcessMaterial->GetParameterValue(EMaterialParameterType::Vector, parameterInfo, metadata);
+	const auto callResult = _colorGradingPostProcessMaterial->GetParameterValue(EMaterialParameterType::Vector, parameterInfo, metadata);
 	
 	if (callResult) {
 		return metadata.Value.AsLinearColor().LinearRGBToHSV();
@@ -542,11 +528,11 @@ FLinearColor SCyberGafferWindowContent::GetColorGradingColor() const {
 }
 
 void SCyberGafferWindowContent::OnColorGradingValueChanged(FLinearColor color) {
-	if (!IsPostProcessMaterialValid()) {
+	if (!IsColorGradingPostProcessMaterialValid()) {
 		return;
 	}
 
-	auto instanceConstant = Cast<UMaterialInstanceConstant>(_postProcessMaterial);
+	auto instanceConstant = Cast<UMaterialInstanceConstant>(_colorGradingPostProcessMaterial);
 	FMaterialParameterInfo parameterInfo(TEXT("Multiplier"));
 	if (instanceConstant) {
 		instanceConstant->SetVectorParameterValueEditorOnly(parameterInfo, color.HSVToLinearRGB());
@@ -554,7 +540,11 @@ void SCyberGafferWindowContent::OnColorGradingValueChanged(FLinearColor color) {
 }
 
 void SCyberGafferWindowContent::OnColorGradingCaptureEnd() {
-	SaveMaterialChanges(_postProcessMaterial.Get());
+	SaveMaterialChanges(_colorGradingPostProcessMaterial.Get());
+}
+
+bool SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid() const {
+	return _colorGradingPostProcessMaterial.IsValid();
 }
 
 FText SCyberGafferWindowContent::GetShadersIncludePath() const {
@@ -602,26 +592,57 @@ void SCyberGafferWindowContent::OnShadersIncludePathCommitted(const FText& newTe
 	_settings->ShadersIncludePath = newText;
 	_settings->SaveConfig();
 
-	TArray<UMaterialInterface*> materials;
-	if (_postProcessMaterial != nullptr) {
-		materials.Add(_postProcessMaterial->GetMaterial());
-		materials.Add(_postProcessMaterial.Get());
-
-		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_postProcessMaterial->GetMaterial()->GetName()));
-		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_postProcessMaterial->GetName()));
-	}
-	if (_cameraPostProcessMaterial != nullptr) {
-		materials.Add(_cameraPostProcessMaterial->GetMaterial());
-		materials.Add(_cameraPostProcessMaterial.Get());
-
-		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_cameraPostProcessMaterial->GetMaterial()->GetName()));
-		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_cameraPostProcessMaterial->GetName()));
-	}
-
-	SaveMaterialsChanges(materials);
+	RecompileShaders();
 	
 	// FLevelEditorActionCallbacks::ExecuteExecCommand(TEXT("RECOMPILESHADERS CHANGED"));
 }
 
+void SCyberGafferWindowContent::SaveMaterialChanges(UMaterialInterface* material) {
+	if (material == nullptr) {
+		return;
+	}
+
+	TArray<UMaterialInterface*> materials;
+	materials.Add(material);
+	SaveMaterialsChanges(materials);
+}
+
+void SCyberGafferWindowContent::SaveMaterialsChanges(const TArray<UMaterialInterface*>& materials) {
+	if (materials.IsEmpty()) {
+		return;
+	}
+	
+	TArray<UPackage*> packagesToSave;
+
+	for (auto material : materials) {
+		material->PostEditChange();
+		material->MarkPackageDirty();
+		packagesToSave.Add(material->GetOutermost());
+	}
+
+	FEditorFileUtils::PromptForCheckoutAndSave(packagesToSave, true, false);
+}
+
+FReply SCyberGafferWindowContent::RecompileShaders() {
+	TArray<UMaterialInterface*> materials;
+	if (_linearPostProcessMaterial != nullptr) {
+		materials.Add(_linearPostProcessMaterial->GetMaterial());
+		materials.Add(_linearPostProcessMaterial.Get());
+
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_linearPostProcessMaterial->GetMaterial()->GetName()));
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_linearPostProcessMaterial->GetName()));
+	}
+	if (_colorGradingPostProcessMaterial != nullptr) {
+		materials.Add(_colorGradingPostProcessMaterial->GetMaterial());
+		materials.Add(_colorGradingPostProcessMaterial.Get());
+
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_colorGradingPostProcessMaterial->GetMaterial()->GetName()));
+		FLevelEditorActionCallbacks::ExecuteExecCommand(FString::Printf(TEXT("RECOMPILESHADERS MATERIAL %s"), *_colorGradingPostProcessMaterial->GetName()));
+	}
+
+	SaveMaterialsChanges(materials);
+
+	return FReply::Handled();
+}
 
 #undef LOCTEXT_NAMESPACE

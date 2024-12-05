@@ -5,6 +5,7 @@
 
 #include "CyberGafferEngineSubsystem.h"
 #include "CyberGafferSuperSampling.h"
+#include "Engine/PostProcessVolume.h"
 
 #include "CyberGafferSceneCaptureComponent2D.generated.h"
 
@@ -27,8 +28,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
 	ECyberGafferSuperSampling SuperSampling = ECyberGafferSuperSampling::x64;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post process")
+	APostProcessVolume* GlobalPostProcessVolume;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post process")
+	UMaterialInterface* ColorGradingPostProcessMaterial;
+	
 	UCyberGafferEngineSubsystem* _subsystem;
 
+private:
 	// Should the cubemap be processed and sent to the CyberGaffer server
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CyberGaffer")
 	//bool ProcessCubeMap = true;
@@ -50,4 +58,7 @@ protected:
 	void CheckCaptureSettings();
 	void UpdateFOV();
 	virtual void BeginPlay() override;
+
+private:
+	APostProcessVolume* FindPostProcessVolume();
 };
