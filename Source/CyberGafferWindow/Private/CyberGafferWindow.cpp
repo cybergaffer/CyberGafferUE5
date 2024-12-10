@@ -67,22 +67,22 @@ void FCyberGafferWindowModule::PluginButtonClicked() {
 
 void FCyberGafferWindowModule::RegisterMenus() {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
-	FToolMenuOwnerScoped OwnerScoped(this);
+	FToolMenuOwnerScoped ownerScoped(this);
 
 	{
-		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
+		UToolMenu* menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
 		{
-			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
-			Section.AddMenuEntryWithCommandList(FCyberGafferWindowCommands::Get().OpenPluginWindow, _pluginCommands);
+			FToolMenuSection& section = menu->FindOrAddSection("WindowLayout");
+			section.AddMenuEntryWithCommandList(FCyberGafferWindowCommands::Get().OpenPluginWindow, _pluginCommands);
 		}
 	}
 
 	{
-		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
+		UToolMenu* toolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
 		{
-			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Settings");
+			FToolMenuSection& section = toolbarMenu->FindOrAddSection("Settings");
 			{
-				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FCyberGafferWindowCommands::Get().OpenPluginWindow));
+				FToolMenuEntry& Entry = section.AddEntry(FToolMenuEntry::InitToolBarButton(FCyberGafferWindowCommands::Get().OpenPluginWindow));
 				Entry.SetCommandList(_pluginCommands);
 			}
 		}

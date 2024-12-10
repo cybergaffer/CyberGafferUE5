@@ -33,4 +33,5 @@ public:
 	FText ShadersIncludePath;
 
 	TOptional<FCyberGafferWindowSceneSettings*> GetSettingsForScene(const FString& sceneName);
+	TOptional<FCyberGafferWindowSceneSettings*> GetSettingsForCurrentScene();
 };

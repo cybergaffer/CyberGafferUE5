@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,7 +7,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "CyberGafferWindowSettings.h"
 #include "UObject/StrongObjectPtr.h"
-#include "HAL/CriticalSection.h"
+#include "UObject/ObjectSaveContext.h"
 
 enum PostProcessMaterialType {
 	Linear,
@@ -33,9 +31,10 @@ public:
 	
 
 private:
-	TStrongObjectPtr<UCyberGafferWindowSettings> _settings;
-	TWeakPtr<SDockTab> _containingTab;
-	FDelegateHandle _currentSceneChangedDelegateHandle;
+	TStrongObjectPtr<UCyberGafferWindowSettings> _settings = nullptr;
+	TWeakPtr<SDockTab> _containingTab = nullptr;
+	FDelegateHandle _currentSceneChangedDelegateHandle = {};
+	FDelegateHandle _tempSceneSavedDelegateHandle = {};
 
 	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
 
@@ -43,6 +42,7 @@ private:
 
 	TOptional<FString> GetCurrentSceneName();
 	void OnSceneChanged(const FString& filename, bool asTemplate);
+	void OnTempSceneSaved(UWorld* world, FObjectPostSaveContext postSaveContext);
 
 	FReply CreatePostProcessMaterialInstance(const PostProcessMaterialType type);
 

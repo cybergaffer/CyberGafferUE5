@@ -5,6 +5,13 @@
 #include "Materials/MaterialInterface.h"
 #include "Engine/StaticMesh.h"
 
+namespace {
+	static const FVector SceneCaptureComponentScale (1.0, 1.0, 1.0);
+	static const FVector CapturePosition (-300.0, 0.0, 0.0);
+	static const FVector SpherePosition (0.0, 0.0, 0.0);
+	static const FVector SphereScale (0.1f,0.1f,0.1f);
+}
+
 ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& objectInitializer) : Super(objectInitializer) {
 	_cyberGafferSceneCaptureComponent2D = CreateDefaultSubobject<UCyberGafferSceneCaptureComponent2D>(TEXT("NewCyberGafferSceneCaptureComponent2D"));
 	_cyberGafferSceneCaptureComponent2D->SetupAttachment(RootComponent);
@@ -51,17 +58,12 @@ void ACyberGafferSceneCapture::PostEditChangeProperty(FPropertyChangedEvent& Pro
 
 
 void ACyberGafferSceneCapture::UpdateChildTransforms() {
-	FVector sceneCaptureComponentScale {1,1,1};
-	FVector capturePosition = {-300,0,0};
-	FVector spherePosition = {0,0,0};
-	FVector sphereScale {0.1f,0.1f,0.1f};
-
-	_cyberGafferSceneCaptureComponent2D->SetRelativeLocation(capturePosition);
-	_cyberGafferSceneCaptureComponent2D->SetRelativeScale3D(sceneCaptureComponentScale);
-	_taskSphere->SetRelativeLocation(spherePosition);
-	_taskSphere->SetRelativeScale3D(sphereScale);
-	_gizmoSphere->SetRelativeLocation(spherePosition);
-	_gizmoSphere->SetRelativeScale3D(sphereScale);
+	_cyberGafferSceneCaptureComponent2D->SetRelativeLocation(CapturePosition);
+	_cyberGafferSceneCaptureComponent2D->SetRelativeScale3D(SceneCaptureComponentScale);
+	_taskSphere->SetRelativeLocation(SpherePosition);
+	_taskSphere->SetRelativeScale3D(SphereScale);
+	_gizmoSphere->SetRelativeLocation(SpherePosition);
+	_gizmoSphere->SetRelativeScale3D(SphereScale);
 }
 
 
