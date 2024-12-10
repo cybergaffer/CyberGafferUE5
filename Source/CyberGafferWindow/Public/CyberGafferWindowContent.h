@@ -9,6 +9,8 @@
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/ObjectSaveContext.h"
 
+#include "atomic"
+
 enum PostProcessMaterialType {
 	Linear,
 	ColorGrading
@@ -34,8 +36,10 @@ private:
 	TStrongObjectPtr<UCyberGafferWindowSettings> _settings = nullptr;
 	TWeakPtr<SDockTab> _containingTab = nullptr;
 	FDelegateHandle _currentSceneChangedDelegateHandle = {};
-	FDelegateHandle _tempSceneSavedDelegateHandle = {};
 
+	FDelegateHandle _tempSceneSavedDelegateHandle = {};
+	std::atomic_bool _isTempScene = false;
+	
 	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
 
 	static UMaterialInstance* LoadMaterialUsingPath(const FString& path);

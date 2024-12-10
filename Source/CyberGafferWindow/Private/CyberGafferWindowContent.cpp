@@ -8,6 +8,9 @@
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Input/SNumericEntryBox.h"
+#include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Widgets/SNullWidget.h"
+#include "SWarningOrErrorBox.h"
 #include "Layout/Margin.h"
 #include "Styling/AppStyle.h"
 #include "UObject/ConstructorHelpers.h"
@@ -20,6 +23,7 @@
 #include "CyberGaffer.h"
 #include "Editor/LevelEditor/Public/LevelEditorActions.h"
 #include "AssetToolsModule.h"
+#include "SWarningOrErrorBox.h"
 #include "Factories/MaterialInstanceConstantFactoryNew.h"
 #include "Dialogs/Dialogs.h"
 
@@ -81,6 +85,25 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		// _detailsView->GetWidget().ToSharedRef()
 		
 		SNew(SVerticalBox)
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SWidgetSwitcher)
+			.WidgetIndex_Lambda([this]() -> int32 {
+				return this->_isTempScene;
+			})
+			+SWidgetSwitcher::Slot()
+			[
+				SNullWidget::NullWidget
+			]
+			+SWidgetSwitcher::Slot()
+			[
+				SNew(SWarningOrErrorBox)
+				.Padding(verticalSlotPadding)
+				.MessageStyle(EMessageStyle::Warning)
+				.Message(LOCTEXT("UnsavedMapText", "The current map is unsaved, please, save it, otherwise your CyberGaffer settings will be not saved"))
+			]
+		]
 		+SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(verticalSlotPadding)
@@ -328,18 +351,18 @@ TOptional<FString> SCyberGafferWindowContent::GetCurrentSceneName() {
 
 	const UPackage* worldPackage = world->GetPackage();
 	const FString worldPackageName = worldPackage->GetName();
-	const auto isTemp = FPackageName::IsTempPackage(worldPackageName);
+	_isTempScene = FPackageName::IsTempPackage(worldPackageName);
 
 	// FPackageName::Name
 	// CYBERGAFFER_LOG(Warning, TEXT(" SCyberGafferWindowContent::GetCurrentSceneName: outermost file path: %s, temp: %i"), *mapName, isTemp);
-	if (isTemp) {
+	if (_isTempScene) {
 		if (!_tempSceneSavedDelegateHandle.IsValid()) {
 			_tempSceneSavedDelegateHandle = FEditorDelegates::PostSaveWorldWithContext.AddRaw(this, &SCyberGafferWindowContent::OnTempSceneSaved);
 		}
 		
 		CYBERGAFFER_LOG(Warning, TEXT(" SCyberGafferWindowContent::GetCurrentSceneName: scene file doesn't saved yet"));
 		return TOptional<FString>();
-	} else {
+	} else {		
 		if (_tempSceneSavedDelegateHandle.IsValid()) {
 			FEditorDelegates::PostSaveWorldWithContext.Remove(_tempSceneSavedDelegateHandle);
 			_tempSceneSavedDelegateHandle.Reset();

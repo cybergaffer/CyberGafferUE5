@@ -41,6 +41,7 @@ public class CyberGafferWindow : ModuleRules {
 				"AssetTools",
 				"CyberGaffer",
 				"LevelEditor",
+				"ToolWidgets",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);
