@@ -75,7 +75,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 		ProjectionType = ECameraProjectionMode::Type::Perspective;
 	}
 	
-	PostProcessSettings = {};
+	// PostProcessSettings = {};
 
 	PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
