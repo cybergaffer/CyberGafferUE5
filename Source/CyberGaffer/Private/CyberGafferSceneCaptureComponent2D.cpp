@@ -97,16 +97,30 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 
 void UCyberGafferSceneCaptureComponent2D::UpdateFOV() {
 	AActor* ownerActor = GetOwner();
-	float scale = ownerActor->GetActorScale3D().X;
+	const float scale = ownerActor->GetActorScale3D().X;
 	
-	double distanceToSphere = 300 * scale;
-	double radiusSphere = 5 * scale;
+	const double distanceToSphere = 300 * scale;
+	const double radiusSphere = 5 * scale;
+
+	switch (ProjectionType) {
+		case ECameraProjectionMode::Perspective: {
+			FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
+			break;
+		}
+			
+		case ECameraProjectionMode::Orthographic: {
+			OrthoWidth = radiusSphere * 2.0;
+			break;
+		}
+		default: {
+			CYBERGAFFER_LOG(Error, TEXT("UCyberGafferSceneCaptureComponent2D::UpdateFOV: unknown projection type %i"), ProjectionType);
+			break;
+		};
+	}
 	
-	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
 	bOverride_CustomNearClippingPlane = true;
 	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
 }
-
 
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
