@@ -71,9 +71,9 @@ void UCyberGafferSceneCaptureComponent2D::OnComponentCreated() {
 void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings"));
 
-	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective) {
-		ProjectionType = ECameraProjectionMode::Type::Perspective;
-	}
+	// if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective) {
+	// 	ProjectionType = ECameraProjectionMode::Type::Perspective;
+	// }
 	
 	// PostProcessSettings = {};
 
