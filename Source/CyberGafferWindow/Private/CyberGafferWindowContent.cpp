@@ -387,6 +387,9 @@ void SCyberGafferWindowContent::OnSceneChanged(const FString& filename, bool asT
 			_linearPostProcessMaterial = nullptr;
 			_colorGradingPostProcessMaterial = nullptr;
 			_settings->SaveConfig();
+			if (!_settings->TryUpdateDefaultConfigFile()) {
+				FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
+			}
 		}
 	}
 }
@@ -482,7 +485,11 @@ void SCyberGafferWindowContent::OnLinearPostProcessMaterialSelectorValueChanged(
 	} else {
 		sceneSettings.GetValue()->LinearPostProcessMaterial = "";
 	}
+	
 	_settings->SaveConfig();
+	if (!_settings->TryUpdateDefaultConfigFile()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
+	}
 	
 	_linearPostProcessMaterial = materialInstance;
 }
@@ -515,6 +522,9 @@ void SCyberGafferWindowContent::OnColorGradingPostProcessMaterialSelectorValueCh
 		sceneSettings.GetValue()->ColorGradingPostProcessMaterial = "";
 	}
 	_settings->SaveConfig();
+	if (!_settings->TryUpdateDefaultConfigFile()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
+	}
 	
 	_colorGradingPostProcessMaterial = materialInstance;
 }
@@ -631,6 +641,9 @@ void SCyberGafferWindowContent::OnShadersIncludePathCommitted(const FText& newTe
 
 	_settings->ShadersIncludePath = newText;
 	_settings->SaveConfig();
+	if (!_settings->TryUpdateDefaultConfigFile()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
+	}
 
 	RecompileShaders();
 	

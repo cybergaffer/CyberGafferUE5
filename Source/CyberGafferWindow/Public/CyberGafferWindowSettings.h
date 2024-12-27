@@ -21,8 +21,8 @@ public:
 		: LinearPostProcessMaterial(linearPostProcessMaterial), ColorGradingPostProcessMaterial(colorGradingPostProcessMaterial) {}
 };
 
-UCLASS(Config=CyberGafferWindow)
-class UCyberGafferWindowSettings : public UObject {
+UCLASS(Config=Editor, DefaultConfig)
+class CYBERGAFFERWINDOW_API UCyberGafferWindowSettings : public UObject {
 	GENERATED_BODY()
 
 public:
