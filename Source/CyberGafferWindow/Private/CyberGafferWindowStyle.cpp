@@ -33,8 +33,9 @@ const FVector2D Icon20x20(20.0f, 20.0f);
 TSharedRef<FSlateStyleSet> FCyberGafferWindowStyle::Create() {
 	TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet("CyberGafferWindowStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("CyberGaffer")->GetBaseDir() / TEXT("Resources"));
-
-	Style->Set("CyberGafferWindow.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
+	
+	Style->Set("CyberGafferWindow.OpenPluginWindow", new IMAGE_BRUSH(TEXT("Icon128"), Icon20x20));
+	Style->Set("CyberGafferWindow.CyberGafferLogoWithText", new IMAGE_BRUSH_SVG(TEXT("LogoCGbyAntilatencyHorizontal"), FVector2d(176, 56)));
 
 	return Style;
 }

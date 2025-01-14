@@ -31,7 +31,8 @@ void FCyberGafferWindowModule::StartupModule() {
 	
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(CyberGafferWindowTabName, FOnSpawnTab::CreateRaw(this, &FCyberGafferWindowModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("FCyberGafferWindowTabTitle", "CyberGafferWindow"))
-		.SetMenuType(ETabSpawnerMenuType::Hidden);
+		.SetMenuType(ETabSpawnerMenuType::Hidden)
+		.SetIcon(FSlateIcon(FCyberGafferWindowStyle::Get().GetStyleSetName(), "CyberGafferWindow.OpenPluginWindow"));
 }
 
 void FCyberGafferWindowModule::ShutdownModule() {
@@ -69,11 +70,20 @@ void FCyberGafferWindowModule::RegisterMenus() {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
 	FToolMenuOwnerScoped ownerScoped(this);
 
+	const auto icon = FSlateIcon(FCyberGafferWindowStyle::Get().GetStyleSetName(), "CyberGafferWindow.OpenPluginWindow");
+
 	{
 		UToolMenu* menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
 		{
 			FToolMenuSection& section = menu->FindOrAddSection("WindowLayout");
-			section.AddMenuEntryWithCommandList(FCyberGafferWindowCommands::Get().OpenPluginWindow, _pluginCommands);
+			
+			section.AddMenuEntryWithCommandList(
+				FCyberGafferWindowCommands::Get().OpenPluginWindow,
+				_pluginCommands,
+				TAttribute<FText>(),
+				TAttribute<FText>(),
+				icon
+			);
 		}
 	}
 
@@ -82,7 +92,14 @@ void FCyberGafferWindowModule::RegisterMenus() {
 		{
 			FToolMenuSection& section = toolbarMenu->FindOrAddSection("Settings");
 			{
-				FToolMenuEntry& Entry = section.AddEntry(FToolMenuEntry::InitToolBarButton(FCyberGafferWindowCommands::Get().OpenPluginWindow));
+				FToolMenuEntry& Entry = section.AddEntry(
+					FToolMenuEntry::InitToolBarButton(
+						FCyberGafferWindowCommands::Get().OpenPluginWindow,
+						TAttribute<FText>(),
+						TAttribute<FText>(),
+						icon
+					)
+				);
 				Entry.SetCommandList(_pluginCommands);
 			}
 		}
