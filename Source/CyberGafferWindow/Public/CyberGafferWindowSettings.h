@@ -16,9 +16,29 @@ public:
 	UPROPERTY(EditAnywhere, Category = "CyberGaffer|Materials")
 	FString ColorGradingPostProcessMaterial;
 
-	FCyberGafferWindowSceneSettings() : LinearPostProcessMaterial(""), ColorGradingPostProcessMaterial("") {}
-	FCyberGafferWindowSceneSettings(const FString& linearPostProcessMaterial, const FString& colorGradingPostProcessMaterial)
-		: LinearPostProcessMaterial(linearPostProcessMaterial), ColorGradingPostProcessMaterial(colorGradingPostProcessMaterial) {}
+	UPROPERTY(EditAnywhere, Category = "CyberGaffer")
+	FString PostProcessVolumePath;
+
+	UPROPERTY(EditAnywhere, Category = "CyberGaffer")
+	FString CyberGafferSceneCapturePath;
+
+
+	FCyberGafferWindowSceneSettings() :
+		LinearPostProcessMaterial(""),
+		ColorGradingPostProcessMaterial(""),
+		PostProcessVolumePath(""),
+		CyberGafferSceneCapturePath("") {}
+	
+	FCyberGafferWindowSceneSettings(
+		const FString& linearPostProcessMaterial,
+		const FString& colorGradingPostProcessMaterial,
+		const FString& postProcessVolumePath,
+		const FString& cyberGafferSceneCapturePath) :
+
+		LinearPostProcessMaterial(linearPostProcessMaterial),
+		ColorGradingPostProcessMaterial(colorGradingPostProcessMaterial),
+		PostProcessVolumePath(postProcessVolumePath),
+		CyberGafferSceneCapturePath(cyberGafferSceneCapturePath) {}
 };
 
 UCLASS(Config=Editor, DefaultConfig)

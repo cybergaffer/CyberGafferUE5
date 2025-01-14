@@ -23,9 +23,11 @@
 #include "CyberGaffer.h"
 #include "Editor/LevelEditor/Public/LevelEditorActions.h"
 #include "AssetToolsModule.h"
+#include "CyberGafferSceneCaptureComponent2D.h"
 #include "SWarningOrErrorBox.h"
 #include "Factories/MaterialInstanceConstantFactoryNew.h"
 #include "Dialogs/Dialogs.h"
+#include "Engine/PostProcessVolume.h"
 
 #define LOCTEXT_NAMESPACE "FCyberGafferWindowModule"
 
@@ -38,7 +40,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 	// FDetailsViewArgs detailsViewArgs;
 	// detailsViewArgs.bAllowSearch = false;
 
-	// auto& propertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	
 	// _windowFields = MakeShared<FStructOnScope>(FCyberGafferWindowFields::StaticStruct());
 	// _detailsView = propertyEditor.CreateStructureDetailView(detailsViewArgs, structureDetailsViewArgs, _windowFields);
 	// _detailsView->GetOnFinishedChangingPropertiesDelegate().AddSP(this, &SCyberGafferWindowContent::OnPropertiesChanged);
@@ -47,6 +49,18 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 
 	OnSceneChanged(FString(""), false);
 
+	// auto currentSceneSettings = _settings->GetSettingsForCurrentScene();
+	// if (!currentSceneSettings.IsSet()) {
+	// 	CYBERGAFFER_LOG(Error, TEXT("The current scene is not set"));
+	// 	return;
+	// }
+	//
+	// auto& propertyEditor = FModuleManager::Get().LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	// FDetailsViewArgs detailsViewArgs;
+	// TSharedRef<IDetailsView> detailsView = propertyEditor.CreateDetailView(detailsViewArgs);
+	// detailsView->SetObject(_settings.Get());
+	// detailsView->OnFinishedChangingProperties().AddSP(this, &)
+	
 	_containingTab = args.__containingTab;
 
 	_currentSceneChangedDelegateHandle = FEditorDelegates::OnMapOpened.AddRaw(this, &SCyberGafferWindowContent::OnSceneChanged);
@@ -55,7 +69,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		tab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateRaw(this, &SCyberGafferWindowContent::OnParentTabClosed));
 	}
 	
-	_linearPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
+	auto linearPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
 		.ObjectPath(this, &SCyberGafferWindowContent::GetLinearPostProcessMaterialPath)
 		.DisplayBrowse(true)
 		.DisplayThumbnail(true)
@@ -63,7 +77,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		.EnableContentPicker(true)
 		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnLinearPostProcessMaterialSelectorValueChanged));
 	
-	_colorGradingPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
+	auto colorGradingPostProcessMaterialSelector = SNew(SObjectPropertyEntryBox)
 		.ObjectPath(this, &SCyberGafferWindowContent::GetColorGradingPostProcessMaterialPath)
 		.DisplayBrowse(true)
 		.DisplayThumbnail(true)
@@ -71,6 +85,22 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 		.EnableContentPicker(true)
 		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnColorGradingPostProcessMaterialSelectorValueChanged));
 
+	auto postProcessVolumeSelector = SNew(SObjectPropertyEntryBox)
+		.ObjectPath(this, &SCyberGafferWindowContent::GetPostProcessVolumePath)
+		.DisplayBrowse(true)
+		.DisplayThumbnail(true)
+		.AllowedClass(APostProcessVolume::StaticClass())
+		.EnableContentPicker(true)
+		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnPostProcessVolumePathChanged));
+
+	auto cyberGafferSceneCaptureSelector = SNew(SObjectPropertyEntryBox)
+		.ObjectPath(this, &SCyberGafferWindowContent::GetCyberGafferSceneCapturePath)
+		.DisplayBrowse(true)
+		.DisplayThumbnail(true)
+		.AllowedClass(ACyberGafferSceneCapture::StaticClass())
+		.EnableContentPicker(true)
+		.OnObjectChanged(FOnSetObject::CreateSP(this, &SCyberGafferWindowContent::OnCyberGafferSceneCaptureChanged));
+		
 	TSharedRef<SSeparator> separator = SNew(SSeparator).Orientation(Orient_Vertical);
 
 	const float headerWidth = 0.4f;
@@ -147,16 +177,11 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.Text(LOCTEXT("LinearPostProcessMaterialText", "Linear Post Process Material"))
 			]
 			+SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				separator
-			]
-			+SHorizontalBox::Slot()
 			.FillWidth(valueWidth)
 			.HAlign(HAlign_Right)
 			.Padding(valueMargin)
 			[
-				_linearPostProcessMaterialSelector.ToSharedRef()
+				linearPostProcessMaterialSelector
 			]
 		]
 		+SVerticalBox::Slot()
@@ -173,16 +198,53 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.Text(LOCTEXT("ColorGradingPostProcessMaterialText", "Color Grading Post Process Material"))
 			]
 			+SHorizontalBox::Slot()
-			.AutoWidth()
+			.FillWidth(valueWidth)
+			.HAlign(HAlign_Right)
+			.Padding(valueMargin)
 			[
-				separator
+				colorGradingPostProcessMaterialSelector
+			]
+		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(verticalSlotPadding)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.FillWidth(headerWidth)
+			.HAlign(HAlign_Left)
+			.Padding(headerMargin)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("PostProcessVolumeSelectorText", "Post Process Volume"))
 			]
 			+SHorizontalBox::Slot()
 			.FillWidth(valueWidth)
 			.HAlign(HAlign_Right)
 			.Padding(valueMargin)
 			[
-				_colorGradingPostProcessMaterialSelector.ToSharedRef()
+				postProcessVolumeSelector
+			]
+		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(verticalSlotPadding)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.FillWidth(headerWidth)
+			.HAlign(HAlign_Left)
+			.Padding(headerMargin)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("CyberGafferSceneCaptureText", "CyberGaffer Scene Capture"))
+			]
+			+SHorizontalBox::Slot()
+			.FillWidth(valueWidth)
+			.HAlign(HAlign_Right)
+			.Padding(valueMargin)
+			[
+				cyberGafferSceneCaptureSelector
 			]
 		]
 		+SVerticalBox::Slot()
@@ -203,12 +265,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			.Padding(headerMargin)
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("ExposureCompensationText", "ExposureCompensation"))
-			]
-			+SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				separator
+				.Text(LOCTEXT("ExposureCompensationText", "Exposure Compensation"))
 			]
 			+SHorizontalBox::Slot()
 			.FillWidth(valueWidth)
@@ -229,6 +286,7 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.OnValueCommitted(this, &SCyberGafferWindowContent::OnExposureCompensationValueCommited)
 				.ToolTipText(LOCTEXT("ExposureCompensationText", "Exposure Compensation"))
 				.IsEnabled(this, &SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid)
+				.MinDesiredValueWidth(75.0f)
 			]
 		]
 		+SVerticalBox::Slot()
@@ -243,11 +301,6 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 			[
 				SNew(STextBlock)
 				.Text(LOCTEXT("ColorGradingText", "Color Grading"))
-			]
-			+SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				separator
 			]
 			+SHorizontalBox::Slot()
 			.FillWidth(valueWidth)
@@ -276,11 +329,6 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.Text(LOCTEXT("ShadersIncludePathText", "Shaders Include Path"))
 			]
 			+SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				separator
-			]
-			+SHorizontalBox::Slot()
 			.FillWidth(valueWidth)
 			.HAlign(HAlign_Right)
 			.Padding(valueMargin)
@@ -289,6 +337,41 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 				.Font(FAppStyle::GetFontStyle(TEXT("MenuItem.Font")))
 				.Text(this, &SCyberGafferWindowContent::GetShadersIncludePath)
 				.OnTextCommitted(this, &SCyberGafferWindowContent::OnShadersIncludePathCommitted)
+				.MinDesiredWidth(75.0f)
+			]
+		]
+		+SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(verticalSlotPadding)
+		[
+			SNew(SHorizontalBox)
+			+SHorizontalBox::Slot()
+			.FillWidth(headerWidth)
+			.HAlign(HAlign_Left)
+			.Padding(headerMargin)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("LumenCacheResolutionText", "Lumen Cache Resolution"))
+			]
+			+SHorizontalBox::Slot()
+			.FillWidth(valueWidth)
+			.HAlign(HAlign_Right)
+			.Padding(valueMargin)
+			[
+				SNew(SNumericEntryBox<float>)
+				.Font(FAppStyle::GetFontStyle(TEXT("MenuItem.Font")))
+				.AllowSpin(true)
+				.MinValue(0.0f)
+				.MaxValue(5.0f)
+				.MinSliderValue(0.5)
+				.MaxSliderValue(2.0)
+				.Delta(0.01f)
+				.LinearDeltaSensitivity(0.001f)
+				.Value(this, &SCyberGafferWindowContent::GetLumenCacheResolution)
+				.OnValueChanged(this, &SCyberGafferWindowContent::OnLumenCacheResolutionValueChanged)
+				.ToolTipText(LOCTEXT("LumenCacheResolutionText", "Lumen Cache Resolution"))
+				.IsEnabled(this, &SCyberGafferWindowContent::IsCyberGafferSceneCaptureComponentValid)
+				.MinDesiredValueWidth(75.0f)
 			]
 		]
 		+SVerticalBox::Slot()
@@ -382,10 +465,26 @@ void SCyberGafferWindowContent::OnSceneChanged(const FString& filename, bool asT
 		if (sceneSettings) {
 			_linearPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->LinearPostProcessMaterial);
 			_colorGradingPostProcessMaterial = LoadMaterialUsingPath(sceneSettings->ColorGradingPostProcessMaterial);
+			
+			FSoftObjectPath postProcessVolumePath(sceneSettings->PostProcessVolumePath);
+			auto postProcessVolume = postProcessVolumePath.ResolveObject();
+			if (postProcessVolume) {
+				_postProcessVolume = Cast<APostProcessVolume>(postProcessVolume);
+				// _postProcessVolumePath = postProcessVolume->GetPathName();
+			}
+
+			FSoftObjectPath cyberGafferSceneCapturePath(sceneSettings->CyberGafferSceneCapturePath);
+			auto cyberGafferSceneCapture = cyberGafferSceneCapturePath.ResolveObject();
+			if (cyberGafferSceneCapture) {
+				_cyberGafferSceneCapture = Cast<ACyberGafferSceneCapture>(cyberGafferSceneCapture);
+				_cyberGafferSceneCaptureComponent = FindCyberGafferSceneCaptureComponent();
+				// _cyberGafferSceneCapturePath = postProcessVolume->GetPathName();
+			}
 		} else {
 			_settings->ScenesSettings.Add(sceneName.GetValue(), FCyberGafferWindowSceneSettings());
 			_linearPostProcessMaterial = nullptr;
 			_colorGradingPostProcessMaterial = nullptr;
+			_postProcessVolume = nullptr;
 			_settings->SaveConfig();
 			if (!_settings->TryUpdateDefaultConfigFile()) {
 				FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
@@ -595,6 +694,116 @@ void SCyberGafferWindowContent::OnColorGradingCaptureEnd() {
 
 bool SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid() const {
 	return _colorGradingPostProcessMaterial.IsValid();
+}
+
+FString SCyberGafferWindowContent::GetPostProcessVolumePath() const {
+	// return _postProcessVolumePath;
+	return _postProcessVolume == nullptr ? "" : _postProcessVolume->GetPathName();
+}
+
+void SCyberGafferWindowContent::OnPostProcessVolumePathChanged(const FAssetData& assetData) {
+	auto objPath = assetData.GetSoftObjectPath();
+	auto obj = objPath.ResolveObject();
+
+	if (obj == nullptr) {
+		_postProcessVolume = nullptr;
+		// _postProcessVolumePath = "";
+	} else {
+		_postProcessVolume = Cast<APostProcessVolume>(obj);
+		// _postProcessVolumePath = assetData.GetObjectPathString();
+	}
+
+	SavePostProcessVolumePath();
+}
+
+void SCyberGafferWindowContent::SavePostProcessVolumePath() {
+	auto sceneSettings = _settings->GetSettingsForCurrentScene();
+	if (!sceneSettings.IsSet()) {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::SavePostProcessVolumePath: current scene settings is null"));
+		return;
+	}
+
+	// sceneSettings.GetValue()->PostProcessVolumePath = _postProcessVolumePath;
+	sceneSettings.GetValue()->PostProcessVolumePath = _postProcessVolume == nullptr ? "" : _postProcessVolume->GetPathName();
+	_settings->SaveConfig();
+	if (!_settings->TryUpdateDefaultConfigFile()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
+	}
+}
+
+bool SCyberGafferWindowContent::IsCyberGafferSceneCaptureComponentValid() const {
+	return _cyberGafferSceneCaptureComponent != nullptr;
+}
+
+UCyberGafferSceneCaptureComponent2D* SCyberGafferWindowContent::FindCyberGafferSceneCaptureComponent() const {
+	if (_cyberGafferSceneCapture == nullptr) {
+		return nullptr;
+	}
+	
+	TArray<UCyberGafferSceneCaptureComponent2D*> components;
+	_cyberGafferSceneCapture->GetComponents(components);
+	if (components.Num() == 0) {
+		return nullptr;
+	}
+	UCyberGafferSceneCaptureComponent2D* sceneCaptureComponent = components[0];
+	if (sceneCaptureComponent == nullptr) {
+		return nullptr;
+	}
+
+	return sceneCaptureComponent;
+}
+
+FString SCyberGafferWindowContent::GetCyberGafferSceneCapturePath() const {
+	// return _cyberGafferSceneCapturePath;
+	return _cyberGafferSceneCapture == nullptr ? "" : _cyberGafferSceneCapture->GetPathName();
+}
+
+void SCyberGafferWindowContent::OnCyberGafferSceneCaptureChanged(const FAssetData& assetData) {
+	auto objPath = assetData.GetSoftObjectPath();
+	auto obj = objPath.ResolveObject();
+
+	if (obj == nullptr) {
+		_cyberGafferSceneCapture = nullptr;
+		_cyberGafferSceneCaptureComponent = nullptr;
+		// _cyberGafferSceneCapturePath = "";
+	} else {
+		_cyberGafferSceneCapture = Cast<ACyberGafferSceneCapture>(obj);
+		_cyberGafferSceneCaptureComponent = FindCyberGafferSceneCaptureComponent();
+		// _cyberGafferSceneCapturePath = assetData.GetObjectPathString();
+	}
+
+	SaveCyberGafferSceneCapturePath();
+}
+
+void SCyberGafferWindowContent::SaveCyberGafferSceneCapturePath() {
+	auto sceneSettings = _settings->GetSettingsForCurrentScene();
+	if (!sceneSettings.IsSet()) {
+		CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::SaveCyberGafferSceneCapturePath: current scene settings is null"));
+		return;
+	}
+
+	// sceneSettings.GetValue()->CyberGafferSceneCapturePath = _cyberGafferSceneCapturePath;
+	sceneSettings.GetValue()->CyberGafferSceneCapturePath = _cyberGafferSceneCapture == nullptr ? "" : _cyberGafferSceneCapture->GetPathName();
+	_settings->SaveConfig();
+	if (!_settings->TryUpdateDefaultConfigFile()) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("FailedToSaveDefaultSettings_Text", "Unable to save settings"));
+	}
+}
+
+TOptional<float> SCyberGafferWindowContent::GetLumenCacheResolution() const {
+	if (_cyberGafferSceneCaptureComponent == nullptr) {
+		return TOptional<float>();
+	}
+
+	return _cyberGafferSceneCaptureComponent->PostProcessSettings.LumenSurfaceCacheResolution;
+}
+
+void SCyberGafferWindowContent::OnLumenCacheResolutionValueChanged(float value) {
+	if (_cyberGafferSceneCaptureComponent == nullptr) {
+		return;
+	}
+
+	_cyberGafferSceneCaptureComponent->PostProcessSettings.LumenSurfaceCacheResolution = value;
 }
 
 FText SCyberGafferWindowContent::GetShadersIncludePath() const {

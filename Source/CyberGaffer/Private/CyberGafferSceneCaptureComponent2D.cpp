@@ -81,7 +81,7 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
 	
 	PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
-	PostProcessSettings.LumenSurfaceCacheResolution = 1;
+	// PostProcessSettings.LumenSurfaceCacheResolution = 1;
 
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
