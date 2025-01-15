@@ -8,15 +8,18 @@
 namespace {
 	static const FVector SceneCaptureComponentScale (1.0, 1.0, 1.0);
 	static const FVector CapturePosition (-300.0, 0.0, 0.0);
+	
 	static const FVector SpherePosition (0.0, 0.0, 0.0);
-	static const FVector SphereScale (0.1f,0.1f,0.1f);
+	static const FVector SphereScale (1.0f,1.0f,1.0f);
+	static const FRotator SphereRotation (0.0f, 0.0f, 0.0f);
+	static const FTransform SphereTransform (SphereRotation, SpherePosition, SphereScale);
 }
 
 ACyberGafferSceneCapture::ACyberGafferSceneCapture(const FObjectInitializer& objectInitializer) : Super(objectInitializer) {
 	_cyberGafferSceneCaptureComponent2D = CreateDefaultSubobject<UCyberGafferSceneCaptureComponent2D>(TEXT("NewCyberGafferSceneCaptureComponent2D"));
 	_cyberGafferSceneCaptureComponent2D->SetupAttachment(RootComponent);
 	
-	UStaticMesh* sphereMesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, TEXT("/Script/Engine.StaticMesh'/CyberGaffer/sphere6.sphere6'")));
+	UStaticMesh* sphereMesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, TEXT("/Script/Engine.StaticMesh'/CyberGaffer/CyberGafferProbe.CyberGafferProbe'")));
 
 	FString pathMaterial = "Script/Engine.Material'/CyberGaffer/Materials/CyberGafferWhiteDiffuse.CyberGafferWhiteDiffuse'";
 	BaseSphereMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, *pathMaterial));
@@ -60,10 +63,14 @@ void ACyberGafferSceneCapture::PostEditChangeProperty(FPropertyChangedEvent& Pro
 void ACyberGafferSceneCapture::UpdateChildTransforms() {
 	_cyberGafferSceneCaptureComponent2D->SetRelativeLocation(CapturePosition);
 	_cyberGafferSceneCaptureComponent2D->SetRelativeScale3D(SceneCaptureComponentScale);
-	_taskSphere->SetRelativeLocation(SpherePosition);
-	_taskSphere->SetRelativeScale3D(SphereScale);
-	_gizmoSphere->SetRelativeLocation(SpherePosition);
-	_gizmoSphere->SetRelativeScale3D(SphereScale);
+
+	_taskSphere->SetRelativeTransform(SphereTransform);
+	_gizmoSphere->SetRelativeTransform(SphereTransform);
+	
+	// _taskSphere->SetRelativeLocation(SpherePosition);
+	// _taskSphere->SetRelativeScale3D(SphereScale);
+	// _gizmoSphere->SetRelativeLocation(SpherePosition);
+	// _gizmoSphere->SetRelativeScale3D(SphereScale);
 }
 
 
