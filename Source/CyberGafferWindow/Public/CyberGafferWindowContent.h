@@ -5,10 +5,11 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "PropertyCustomizationHelpers.h"
-#include "CyberGafferWindowSettings.h"
+#include "CyberGafferProjectSettings.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/ObjectSaveContext.h"
 #include "CyberGafferSceneCapture.h"
+#include "IDetailsView.h"
 
 
 #include "atomic"
@@ -30,20 +31,35 @@ public:
 	SLATE_BEGIN_ARGS(SCyberGafferWindowContent) : __containingTab() {}
 		SLATE_ARGUMENT(TSharedPtr<SDockTab>, _containingTab)
 	SLATE_END_ARGS()
-
-	// CyberGafferWindowContent();
-	// ~CyberGafferWindowContent();
 	
 	void Construct(const FArguments& args);
+	virtual ~SCyberGafferWindowContent() override;
 
 private:
-	TStrongObjectPtr<UCyberGafferWindowSettings> _settings = nullptr;
-	
 	TWeakPtr<SDockTab> _containingTab = nullptr;
 	FDelegateHandle _currentSceneChangedDelegateHandle = {};
 
 	FDelegateHandle _tempSceneSavedDelegateHandle = {};
 	std::atomic_bool _isTempScene = false;
+	
+	TStrongObjectPtr<UCyberGafferProjectSettings> _projectSettings = nullptr;
+	FCyberGafferSceneSettings* _currentSceneSettings = nullptr;
+	FCyberGafferShadersConfig* _shaderConfig = nullptr;
+
+	TSharedPtr<TStructOnScope<FCyberGafferAutomationSettings>> _automationSettings;
+	TSharedPtr<IStructureDetailsView> _automationSettingsView;
+	
+	TSharedPtr<FStructOnScope> _currentSceneSettingsUI;
+	TSharedPtr<IStructureDetailsView> _currentSceneSettingsView;
+
+	TSharedPtr<FStructOnScope> _shadersConfigUI;
+	TSharedPtr<IStructureDetailsView> _shadersConfigView;
+
+	void LoadSerializedSettings();
+	void SerializeSettings();
+
+	void OnScenePropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
+	void OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& PropertyChangedEvent);
 	
 	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
 
@@ -56,20 +72,20 @@ private:
 	FReply CreatePostProcessMaterialInstance(const PostProcessMaterialType type);
 
 	
-	// Linear post process material controls
 	TWeakObjectPtr<UMaterialInstance> _linearPostProcessMaterial;
 	
 	FString GetLinearPostProcessMaterialPath() const;
-	void OnLinearPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
-	// Linear post process material controls end
+	// void OnLinearPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
 
 	
-	// Color grading post process material controls
 	TWeakObjectPtr<UMaterialInstance> _colorGradingPostProcessMaterial;
 	
 	FString GetColorGradingPostProcessMaterialPath() const;
-	void OnColorGradingPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
+	// void OnColorGradingPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
 
+public:
+	FReply OnExecuteAutomationClicked();
+	
 	TOptional<float> GetExposureCompensation() const;
 	void OnExposureCompensationValueChanged(float value);
 	void OnExposureCompensationValueCommited(const float newValue, ETextCommit::Type commitType);
@@ -79,7 +95,7 @@ private:
 	void OnColorGradingCaptureEnd();
 
 	bool IsColorGradingPostProcessMaterialValid() const;
-	// Color grading post process material controls end
+
 
 	
 	// Post Process Volume
@@ -87,7 +103,7 @@ private:
 	// FString _postProcessVolumePath = "";
 	FString GetPostProcessVolumePath() const;
 	void OnPostProcessVolumePathChanged(const FAssetData& assetData);
-	void SavePostProcessVolumePath();
+	// void SavePostProcessVolumePath();
 	// Post Process Volume end
 
 
@@ -99,14 +115,14 @@ private:
 	// FString _cyberGafferSceneCapturePath = "";
 	FString GetCyberGafferSceneCapturePath() const;
 	void OnCyberGafferSceneCaptureChanged(const FAssetData& assetData);
-	void SaveCyberGafferSceneCapturePath();
+	// void SaveCyberGafferSceneCapturePath();
 
 	TOptional<float> GetLumenCacheResolution() const;
 	void OnLumenCacheResolutionValueChanged(float value);
 	// CyberGaffer Scene Capture end
 
 	FText GetShadersIncludePath() const;
-	void OnShadersIncludePathCommitted(const FText& newText, ETextCommit::Type commitType);
+	void OnShadersIncludePathCommitted();
 
 	void SaveMaterialChanges(UMaterialInterface* material);
 	void SaveMaterialsChanges(const TArray<UMaterialInterface*>& materials);

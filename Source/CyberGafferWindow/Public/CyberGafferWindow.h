@@ -17,16 +17,17 @@ public:
 	
 	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void PluginButtonClicked();
+
+	bool IsEnginePlugin() const;
 	
 private:
-
-	void RegisterMenus();
-
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& spawnTabArgs);
-
-private:
 	TSharedPtr<class FUICommandList> _pluginCommands;
 
 	TWeakPtr<UMaterialInstance> _postProcessMaterialInstance = nullptr;
 	TWeakPtr<UMaterialInstance> _cameraPostProcessMaterialInstance = nullptr;
+
+	bool _isEnginePlugin = true;
+
+	void RegisterMenus();
 };

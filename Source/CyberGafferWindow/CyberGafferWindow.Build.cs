@@ -41,7 +41,9 @@ public class CyberGafferWindow : ModuleRules {
 				"AssetTools",
 				"CyberGaffer",
 				"LevelEditor",
-				"ToolWidgets",
+				"ToolWidgets", 
+				"OpenColorIO",
+				"OpenColorIOWrapper"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

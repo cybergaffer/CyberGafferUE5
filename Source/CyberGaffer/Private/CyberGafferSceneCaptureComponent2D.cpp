@@ -37,7 +37,7 @@ APostProcessVolume* UCyberGafferSceneCaptureComponent2D::FindPostProcessVolume()
 	TArray<AActor*> postProcessVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APostProcessVolume::StaticClass(), postProcessVolumes);
 	if (postProcessVolumes.Num() == 0) {
-		CYBERGAFFER_LOG(Log, TEXT("PP Volume not found"));
+		// CYBERGAFFER_LOG(Log, TEXT("PP Volume not found"));
 		GlobalPostProcessVolume = nullptr;
 		return nullptr;
 	}
@@ -229,12 +229,15 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 	if (ColorGradingPostProcessMaterial != nullptr) {
 		if (GlobalPostProcessVolume == nullptr) {
 			GlobalPostProcessVolume = FindPostProcessVolume();
+			// TODO: Do we need to create a PPV in such way?
 			if (GlobalPostProcessVolume == nullptr) {
-				FActorSpawnParameters spawnParameters;
-				spawnParameters.Name = FName(TEXT("CyberGafferPostProcessVolume"));
-				GlobalPostProcessVolume = Cast<APostProcessVolume>(GetWorld()->SpawnActor(APostProcessVolume::StaticClass(), &FTransform::Identity, spawnParameters));
-				GlobalPostProcessVolume->bEnabled = true;
-				GlobalPostProcessVolume->bUnbound = true;
+				return;
+			// 	FActorSpawnParameters spawnParameters;
+			// 	spawnParameters.Name = FName(TEXT("CyberGafferPostProcessVolume"));
+			// 	
+			// 	GlobalPostProcessVolume = Cast<APostProcessVolume>(GetWorld()->SpawnActor(APostProcessVolume::StaticClass(), &FTransform::Identity, spawnParameters));
+			// 	GlobalPostProcessVolume->bEnabled = true;
+			// 	GlobalPostProcessVolume->bUnbound = true;
 			}
 		}
 

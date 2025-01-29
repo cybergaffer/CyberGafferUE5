@@ -2,11 +2,13 @@
 #include "CyberGafferWindowStyle.h"
 #include "CyberGafferWindowCommands.h"
 #include "CyberGafferWindowContent.h"
+#include "CyberGafferLog.h"
 
 #include "LevelEditor.h"
 #include "PropertyCustomizationHelpers.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "ToolMenus.h"
+#include "Interfaces/IPluginManager.h"
 
 static const FName CyberGafferWindowTabName("CyberGaffer");
 
@@ -19,6 +21,10 @@ void FCyberGafferWindowModule::StartupModule() {
 	FCyberGafferWindowStyle::ReloadTextures();
 
 	FCyberGafferWindowCommands::Register();
+
+	const EPluginType pluginType = IPluginManager::Get().FindPlugin(TEXT("CyberGaffer"))->GetType();
+	CYBERGAFFER_LOG(Log, TEXT("FCyberGafferWindowModule::StartupModule: plugin type: %i"), pluginType);
+	_isEnginePlugin = pluginType == EPluginType::Engine;
 	
 	_pluginCommands = MakeShareable(new FUICommandList);
 
@@ -64,6 +70,10 @@ TSharedRef<SDockTab> FCyberGafferWindowModule::OnSpawnPluginTab(const FSpawnTabA
 
 void FCyberGafferWindowModule::PluginButtonClicked() {
 	FGlobalTabmanager::Get()->TryInvokeTab(CyberGafferWindowTabName);
+}
+
+bool FCyberGafferWindowModule::IsEnginePlugin() const {
+	return _isEnginePlugin;
 }
 
 void FCyberGafferWindowModule::RegisterMenus() {
