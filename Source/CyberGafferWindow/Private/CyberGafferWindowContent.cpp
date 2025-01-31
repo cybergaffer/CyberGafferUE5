@@ -9,7 +9,6 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Text/STextBlock.h"
-#include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/SNullWidget.h"
 #include "SWarningOrErrorBox.h"
@@ -19,7 +18,6 @@
 
 #include "Materials/MaterialInstanceConstant.h"
 #include "Modules/ModuleManager.h"
-#include "Widgets/Colors/SColorWheel.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Editor/UnrealEd/Public/FileHelpers.h"
 #include "CyberGaffer.h"
@@ -64,14 +62,22 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 	_automationSettings = MakeShared<TStructOnScope<FCyberGafferAutomationSettings>>();
 	_automationSettings->InitializeAs<FCyberGafferAutomationSettings>();
 	_automationSettingsView = propertyEditor.CreateStructureDetailView(detailsViewArgs, structureDetailsViewArgs, TSharedPtr<TStructOnScope<FCyberGafferAutomationSettings>>());
-	
+	_automationSettingsView->SetStructureData(_automationSettings);
 	_automationSettingsView->GetDetailsView()->RegisterInstancedCustomPropertyLayout(
 		FCyberGafferAutomationSettings::StaticStruct(),
 		FOnGetDetailCustomizationInstance::CreateLambda([this] {
 			return FCyberGafferWindowAutomationCustomization::MakeInstance(SharedThis(this));
 		})
 	);
-	_automationSettingsView->SetStructureData(_automationSettings);
+	
+	// _automationSettingsView->GetDetailsView()->RegisterInstancedCustomPropertyTypeLayout(
+	// 	// FCyberGafferAutomationSettings::StaticStruct()->GetFName(),
+	// 	FName(TEXT("AddCyberGafferSceneCapture")),
+	// 	FOnGetPropertyTypeCustomizationInstance::CreateLambda([this] {
+	// 		return FCyberGafferWindowAutomationCustomization::MakeInstance(SharedThis(this));
+	// 	})
+	// );
+	
 	_automationSettingsView->GetDetailsView()->ForceRefresh();
 	
 	_currentSceneSettingsUI = MakeShared<FStructOnScope>(FCyberGafferSceneSettings::StaticStruct());
@@ -354,14 +360,17 @@ void SCyberGafferWindowContent::OnScenePropertiesChanged(const FPropertyChangedE
 	SerializeSettings();
 }
 
-void SCyberGafferWindowContent::OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& PropertyChangedEvent) {
+void SCyberGafferWindowContent::OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent) {
 	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnShaderConfigPropertiesChanged"));
-	
-	const auto propName = PropertyChangedEvent.GetPropertyName();
-	CYBERGAFFER_LOG(Warning, TEXT("PROP NAME: %s"), *propName.ToString());
 
 	CastChecked<UScriptStruct>(_shadersConfigUI->GetStruct())->CopyScriptStruct(&_projectSettings.Get()->ShadersConfig, _shadersConfigUI->GetStructMemory());
 	SerializeSettings();
+	
+	const auto propMemberName = propertyChangedEvent.GetMemberPropertyName();
+	
+	if (propMemberName.ToString() == FString("ShadersIncludePath")) {
+		OnShadersIncludePathCommitted();
+	}
 }
 
 void SCyberGafferWindowContent::OnParentTabClosed(TSharedRef<SDockTab> parentTab) {

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "IDetailCustomization.h"
+#include "IPropertyTypeCustomization.h"
 
 class SCyberGafferWindowContent; 
 
@@ -15,3 +16,15 @@ public:
 private:
 	TSharedPtr<SCyberGafferWindowContent> _content;
 };
+
+// class FCyberGafferWindowAutomationCustomization : public IPropertyTypeCustomization {
+// public:
+// 	static TSharedRef<IPropertyTypeCustomization> MakeInstance(TSharedPtr<SCyberGafferWindowContent> content);
+// 	FCyberGafferWindowAutomationCustomization(TSharedPtr<SCyberGafferWindowContent> content);
+//
+// 	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
+// 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
+//
+// private:
+// 	TSharedPtr<SCyberGafferWindowContent> _content;
+// };

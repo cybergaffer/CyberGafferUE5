@@ -23,25 +23,14 @@ void FCyberGafferWindowShadersConfigCustomization::CustomizeDetails(IDetailLayou
 		ECategoryPriority::Uncommon
 	);
 
-	TArray<TSharedRef<IPropertyHandle>> defaultProperties;
-	shadersConfigBuilder.GetDefaultProperties(defaultProperties);
-	TSharedPtr<IPropertyHandle> handle;
-	for (auto prop : defaultProperties) {
-		FStringView propPath = prop.Get().GetPropertyPath();
-		
-		if (propPath.Equals("ShadersIncludePath")) {
-			auto pathPropertyHandle = prop.Get().GetChildHandle(TEXT("Path"));
-			if (pathPropertyHandle.IsValid() && pathPropertyHandle.Get() != nullptr) {
-				handle = pathPropertyHandle.ToSharedRef();
-			} else {
-				CYBERGAFFER_LOG(Error, TEXT("FCyberGafferWindowShadersConfigCustomization::CustomizeDetails: Cannot find Path child property of ShadersIncludePath."));
-				return;
-			}
-		}
-	}
+	TArray<TSharedRef<IPropertyHandle>> handles;
+    handles.Empty();
+    shadersConfigBuilder.GetDefaultProperties(handles);
 
-	FSimpleDelegate onChanged = FSimpleDelegate::CreateSP(_content.ToSharedRef(), &SCyberGafferWindowContent::OnShadersIncludePathCommitted);
-	handle.Get()->SetOnPropertyValueChanged(onChanged);
+    for (auto handle : handles) {
+    	detailLayout.HideProperty(handle);
+    	shadersConfigBuilder.AddProperty(handle.ToSharedPtr());
+    }
 	
 	shadersConfigBuilder.InitiallyCollapsed(true);
 	shadersConfigBuilder.SetShowAdvanced(true);

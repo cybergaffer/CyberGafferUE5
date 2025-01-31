@@ -59,7 +59,7 @@ private:
 	void SerializeSettings();
 
 	void OnScenePropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
-	void OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& PropertyChangedEvent);
+	void OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
 	
 	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
 

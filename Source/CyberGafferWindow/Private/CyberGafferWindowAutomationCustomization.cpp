@@ -22,8 +22,17 @@ void FCyberGafferWindowAutomationCustomization::CustomizeDetails(IDetailLayoutBu
 		FText::GetEmpty(),
 		ECategoryPriority::Uncommon
 	);
+
+	TArray<TSharedRef<IPropertyHandle>> handles;
+	handles.Empty();
+	automationBuilder.GetDefaultProperties(handles);
+
+	for (auto handle : handles) {
+		detailLayout.HideProperty(handle);
+		automationBuilder.AddProperty(handle.ToSharedPtr());
+	}
 	
-	FDetailWidgetRow& row = automationBuilder.AddCustomRow(LOCTEXT("ExecuteAutomation_Text", "ExecuteAutomation"), false)
+	automationBuilder.AddCustomRow(LOCTEXT("ExecuteAutomation_Text", "ExecuteAutomation"), false)
 	.WholeRowContent()
 	[
 		SNew(SBox)
@@ -39,3 +48,4 @@ void FCyberGafferWindowAutomationCustomization::CustomizeDetails(IDetailLayoutBu
 }
 
 #undef LOCTEXT_NAMESPACE
+
