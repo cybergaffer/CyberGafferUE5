@@ -31,32 +31,6 @@ void UCyberGafferSceneCaptureComponent2D::BeginPlay() {
 	UpdateFOV();
 }
 
-APostProcessVolume* UCyberGafferSceneCaptureComponent2D::FindPostProcessVolume() {
-	APostProcessVolume* result = nullptr;
-	
-	TArray<AActor*> postProcessVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APostProcessVolume::StaticClass(), postProcessVolumes);
-	if (postProcessVolumes.Num() == 0) {
-		// CYBERGAFFER_LOG(Log, TEXT("PP Volume not found"));
-		GlobalPostProcessVolume = nullptr;
-		return nullptr;
-	}
-
-	// Assume that the first unbound post process volume is what we need.
-	for (auto postProcessVolumeActor : postProcessVolumes) {
-		auto postProcessVolume = Cast<APostProcessVolume>(postProcessVolumeActor);
-		if (postProcessVolume) {
-			if (postProcessVolume->bUnbound) {
-				result = postProcessVolume;
-				break;
-			}
-		}
-	}
-	
-	CYBERGAFFER_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::FindPostProcessVolume: found post process volume, name: %s"), *result->GetName());
-	return result;
-}
-
 #if WITH_EDITOR
 void UCyberGafferSceneCaptureComponent2D::OnComponentCreated() {
 	Super::OnComponentCreated();
@@ -81,7 +55,9 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
 	
 	PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
-	// PostProcessSettings.LumenSurfaceCacheResolution = 1;
+	PostProcessSettings.LumenSurfaceCacheResolution = 1;
+
+	PostProcessSettings.bOverride_LumenFinalGatherQuality = true;
 
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
@@ -225,34 +201,8 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 			return;
 		}
 	}
-
-	if (ColorGradingPostProcessMaterial != nullptr) {
-		if (GlobalPostProcessVolume == nullptr) {
-			GlobalPostProcessVolume = FindPostProcessVolume();
-			// TODO: Do we need to create a PPV in such way?
-			if (GlobalPostProcessVolume == nullptr) {
-				return;
-			// 	FActorSpawnParameters spawnParameters;
-			// 	spawnParameters.Name = FName(TEXT("CyberGafferPostProcessVolume"));
-			// 	
-			// 	GlobalPostProcessVolume = Cast<APostProcessVolume>(GetWorld()->SpawnActor(APostProcessVolume::StaticClass(), &FTransform::Identity, spawnParameters));
-			// 	GlobalPostProcessVolume->bEnabled = true;
-			// 	GlobalPostProcessVolume->bUnbound = true;
-			}
-		}
-
-		if (GlobalPostProcessVolume != nullptr) {
-			GlobalPostProcessVolume->AddOrUpdateBlendable(ColorGradingPostProcessMaterial, 0.0f);
-		}
-	}
 	
 	Super::UpdateSceneCaptureContents(scene);
-
-	if (ColorGradingPostProcessMaterial != nullptr) {
-		if (GlobalPostProcessVolume != nullptr) {
-			GlobalPostProcessVolume->AddOrUpdateBlendable(ColorGradingPostProcessMaterial, 1.0f);
-		}
-	}
 	
 	if (!FMath::IsPowerOfTwo(TextureTarget->SizeX)) {
 		CYBERGAFFER_LOG(Error, TEXT("UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents: the target cube texture side size must be power of 2. Recommended size: 512 or 1024"));

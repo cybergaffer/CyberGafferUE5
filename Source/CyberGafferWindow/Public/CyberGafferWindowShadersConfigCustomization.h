@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include "CoreMinimal.h"
 #include "IDetailCustomization.h"
 
@@ -14,4 +14,4 @@ public:
 
 private:
 	TSharedPtr<SCyberGafferWindowContent> _content;
-};
+};*/

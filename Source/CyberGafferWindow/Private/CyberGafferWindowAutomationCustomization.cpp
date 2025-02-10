@@ -5,6 +5,7 @@
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
+#include "DetailWidgetRow.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Input/SButton.h"
 

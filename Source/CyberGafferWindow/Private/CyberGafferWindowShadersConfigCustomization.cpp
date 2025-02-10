@@ -1,5 +1,5 @@
 #include "CyberGafferWindowShadersConfigCustomization.h"
-
+/*
 #include "CyberGafferWindowContent.h"
 #include "CyberGafferLog.h"
 
@@ -49,4 +49,4 @@ void FCyberGafferWindowShadersConfigCustomization::CustomizeDetails(IDetailLayou
 	];
 }
 
-#undef LOCTEXT_NAMESPACE
+#undef LOCTEXT_NAMESPACE*/

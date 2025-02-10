@@ -4,10 +4,14 @@
 #include "CyberGafferLog.h"
 #include "CyberGafferWindowContent.h"
 
+#include "ColorPicker.h"
+
 #include "DetailLayoutBuilder.h"
 #include "DetailCategoryBuilder.h"
 #include "Widgets/Colors/SColorWheel.h"
 #include "Widgets/Input/SNumericEntryBox.h"
+#include "Editor/PropertyEditor/Public/DetailWidgetRow.h"
+#include "Widgets/Colors/SSimpleGradient.h"
 
 #define LOCTEXT_NAMESPACE "FCyberGafferWindowModule"
 
@@ -19,10 +23,13 @@ FCyberGafferWindowSceneControlsCustomization::FCyberGafferWindowSceneControlsCus
 	TSharedPtr<SCyberGafferWindowContent> content) : _content(content) { }
 
 void FCyberGafferWindowSceneControlsCustomization::CustomizeDetails(IDetailLayoutBuilder& detailLayout) {
+	IDetailCategoryBuilder& materialsEdit = detailLayout.EditCategory(FName(TEXT("Materials")));
+	materialsEdit.InitiallyCollapsed(true);
+	
 	IDetailCategoryBuilder& controlsEdit = detailLayout.EditCategory(
 		FName(TEXT("Controls")),
 		FText::GetEmpty(),
-		ECategoryPriority::Uncommon
+		ECategoryPriority::Important
 	);
 	controlsEdit.AddCustomRow(FText::FromString(TEXT("Exposure Compensation")))
 		.NameContent()
@@ -45,31 +52,31 @@ void FCyberGafferWindowSceneControlsCustomization::CustomizeDetails(IDetailLayou
 			.Value(_content.ToSharedRef(), &SCyberGafferWindowContent::GetExposureCompensation)
 			.OnValueChanged(_content.ToSharedRef(), &SCyberGafferWindowContent::OnExposureCompensationValueChanged)
 			.OnValueCommitted(_content.ToSharedRef(), &SCyberGafferWindowContent::OnExposureCompensationValueCommited)
-			.IsEnabled(_content.ToSharedRef(), &SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid)
+			.IsEnabled(_content.ToSharedRef(), &SCyberGafferWindowContent::IsPostProcessMaterialValid)
 			.MinDesiredValueWidth(75.0f)
 		];
 
-	controlsEdit.AddCustomRow(FText::FromString(TEXT("Color Grading")))
+	controlsEdit.AddCustomRow(FText::FromString(TEXT("Multiplier")))
 		.NameContent()
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("ColorGrading_Text", "Color Grading"))
+			.Text(LOCTEXT("Multiplier_Text", "Multiplier"))
 		]
 		.ValueContent()
 		[
-			SNew(SColorWheel)
-			.SelectedColor(_content.ToSharedRef(), &SCyberGafferWindowContent::GetColorGradingColor)
-			.OnValueChanged(_content.ToSharedRef(), &SCyberGafferWindowContent::OnColorGradingValueChanged)
-			.OnMouseCaptureEnd(_content.ToSharedRef(), &SCyberGafferWindowContent::OnColorGradingCaptureEnd)
-			.ToolTipText(LOCTEXT("ColorGrading_Text", "Color Grading"))
-			.IsEnabled(_content.ToSharedRef(), &SCyberGafferWindowContent::IsColorGradingPostProcessMaterialValid)
+			SNew(SCustomColorPicker)
+			._targetColorAttribute(_content.ToSharedRef(), &SCyberGafferWindowContent::GetMultiplierColor)
+			._onColorChanged(_content.ToSharedRef(), &SCyberGafferWindowContent::OnMultiplierColorChanged)
+			._onColorCommited(_content.ToSharedRef(), &SCyberGafferWindowContent::OnMultiplierColorCommited)
+			.IsEnabled(_content.ToSharedRef(), &SCyberGafferWindowContent::IsPostProcessMaterialValid)
 		];
 
-	controlsEdit.AddCustomRow(FText::FromString(TEXT("LumenCacheResolutionText")))
+	
+	controlsEdit.AddCustomRow(FText::FromString(TEXT("LumenFinalGatherQuality")))
 	.NameContent()
 	[
 		SNew(STextBlock)
-		.Text(LOCTEXT("LumenCacheResolution_Text", "Lumen Cache Resolution"))
+		.Text(LOCTEXT("LumenFinalGatherQuality_Text", "Lumen Final Gather Quality"))
 	]
 	.ValueContent()
 	[
@@ -82,9 +89,11 @@ void FCyberGafferWindowSceneControlsCustomization::CustomizeDetails(IDetailLayou
 		.MaxSliderValue(2.0)
 		.Delta(0.01f)
 		.LinearDeltaSensitivity(0.001f)
-		.Value(_content.ToSharedRef(), &SCyberGafferWindowContent::GetLumenCacheResolution)
-		.OnValueChanged(_content.ToSharedRef(), &SCyberGafferWindowContent::OnLumenCacheResolutionValueChanged)
-		.ToolTipText(LOCTEXT("LumenCacheResolution_Text", "Lumen Cache Resolution"))
+		.Value(_content.ToSharedRef(), &SCyberGafferWindowContent::GetLumenFinalGatherQuality)
+		// .OnBeginSliderMovement()
+		.OnValueChanged(_content.ToSharedRef(), &SCyberGafferWindowContent::OnLumenFinalGatherQualityValueChanged)
+		.OnValueCommitted(_content.ToSharedRef(), &SCyberGafferWindowContent::OnLumenFinalGatherQualityValueCommited)
+		.ToolTipText(LOCTEXT("LumenFinalGatherQuality_Text", "Lumen Final Gather Quality"))
 		.IsEnabled(_content.ToSharedRef(), &SCyberGafferWindowContent::IsCyberGafferSceneCaptureComponentValid)
 		.MinDesiredValueWidth(75.0f)
 	];

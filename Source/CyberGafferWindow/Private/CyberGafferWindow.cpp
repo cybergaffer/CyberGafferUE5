@@ -36,7 +36,7 @@ void FCyberGafferWindowModule::StartupModule() {
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FCyberGafferWindowModule::RegisterMenus));
 	
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(CyberGafferWindowTabName, FOnSpawnTab::CreateRaw(this, &FCyberGafferWindowModule::OnSpawnPluginTab))
-		.SetDisplayName(LOCTEXT("FCyberGafferWindowTabTitle", "CyberGafferWindow"))
+		.SetDisplayName(LOCTEXT("CyberGafferWindowTabTitle_Text", "CyberGaffer"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden)
 		.SetIcon(FSlateIcon(FCyberGafferWindowStyle::Get().GetStyleSetName(), "CyberGafferWindow.OpenPluginWindow"));
 }

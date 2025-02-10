@@ -4,20 +4,14 @@
 
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "PropertyCustomizationHelpers.h"
 #include "CyberGafferProjectSettings.h"
 #include "UObject/StrongObjectPtr.h"
-#include "UObject/ObjectSaveContext.h"
 #include "CyberGafferSceneCapture.h"
 #include "IDetailsView.h"
+#include "UObject/ObjectSaveContext.h"
 
 
 #include "atomic"
-
-enum PostProcessMaterialType {
-	Linear,
-	ColorGrading
-};
 
 class APostProcessVolume;
 class UCyberGafferSceneCaptureComponent2D;
@@ -44,7 +38,7 @@ private:
 	
 	TStrongObjectPtr<UCyberGafferProjectSettings> _projectSettings = nullptr;
 	FCyberGafferSceneSettings* _currentSceneSettings = nullptr;
-	FCyberGafferShadersConfig* _shaderConfig = nullptr;
+	// FCyberGafferShadersConfig* _shaderConfig = nullptr;
 
 	TSharedPtr<TStructOnScope<FCyberGafferAutomationSettings>> _automationSettings;
 	TSharedPtr<IStructureDetailsView> _automationSettingsView;
@@ -52,14 +46,14 @@ private:
 	TSharedPtr<FStructOnScope> _currentSceneSettingsUI;
 	TSharedPtr<IStructureDetailsView> _currentSceneSettingsView;
 
-	TSharedPtr<FStructOnScope> _shadersConfigUI;
-	TSharedPtr<IStructureDetailsView> _shadersConfigView;
+	// TSharedPtr<FStructOnScope> _shadersConfigUI;
+	// TSharedPtr<IStructureDetailsView> _shadersConfigView;
 
 	void LoadSerializedSettings();
 	void SerializeSettings();
 
 	void OnScenePropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
-	void OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
+	// void OnShaderConfigPropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent);
 	
 	void OnParentTabClosed(TSharedRef<SDockTab> parentTab);
 
@@ -69,63 +63,64 @@ private:
 	void OnSceneChanged(const FString& filename, bool asTemplate);
 	void OnTempSceneSaved(UWorld* world, FObjectPostSaveContext postSaveContext);
 
-	FReply CreatePostProcessMaterialInstance(const PostProcessMaterialType type);
+	FReply CreatePostProcessMaterialInstance();
 
 	
-	TWeakObjectPtr<UMaterialInstance> _linearPostProcessMaterial;
+	TWeakObjectPtr<UMaterialInstance> _postProcessMaterial;
 	
 	FString GetLinearPostProcessMaterialPath() const;
+
+	APostProcessVolume* FindPostProcessVolume(UWorld* world);
+	ACyberGafferSceneCapture* FindCyberGafferSceneCapture(UWorld* world);
+	
 	// void OnLinearPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
 
 	
-	TWeakObjectPtr<UMaterialInstance> _colorGradingPostProcessMaterial;
+	// TWeakObjectPtr<UMaterialInstance> _colorGradingPostProcessMaterial;
 	
-	FString GetColorGradingPostProcessMaterialPath() const;
+	// FString GetColorGradingPostProcessMaterialPath() const;
 	// void OnColorGradingPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
+	
+	
 
 public:
 	FReply OnExecuteAutomationClicked();
+
+	bool IsPostProcessMaterialValid() const;
 	
 	TOptional<float> GetExposureCompensation() const;
 	void OnExposureCompensationValueChanged(float value);
 	void OnExposureCompensationValueCommited(const float newValue, ETextCommit::Type commitType);
 
-	FLinearColor GetColorGradingColor() const;
-	void OnColorGradingValueChanged(FLinearColor color);
-	void OnColorGradingCaptureEnd();
-
-	bool IsColorGradingPostProcessMaterialValid() const;
-
-
+	FLinearColor GetMultiplierColor() const;
+	void OnMultiplierColorChanged(FLinearColor color);
+	void OnMultiplierColorCommited();
 	
 	// Post Process Volume
-	TObjectPtr<APostProcessVolume> _postProcessVolume;
-	// FString _postProcessVolumePath = "";
+	TWeakObjectPtr<APostProcessVolume> _postProcessVolume;
 	FString GetPostProcessVolumePath() const;
 	void OnPostProcessVolumePathChanged(const FAssetData& assetData);
-	// void SavePostProcessVolumePath();
 	// Post Process Volume end
 
 
 	// CyberGaffer Scene Capture
-	TObjectPtr<ACyberGafferSceneCapture> _cyberGafferSceneCapture;
-	TObjectPtr<UCyberGafferSceneCaptureComponent2D> _cyberGafferSceneCaptureComponent;
+	TWeakObjectPtr<ACyberGafferSceneCapture> _cyberGafferSceneCapture;
+	TWeakObjectPtr<UCyberGafferSceneCaptureComponent2D> _cyberGafferSceneCaptureComponent;
 	bool IsCyberGafferSceneCaptureComponentValid() const;
 	UCyberGafferSceneCaptureComponent2D* FindCyberGafferSceneCaptureComponent() const;
-	// FString _cyberGafferSceneCapturePath = "";
 	FString GetCyberGafferSceneCapturePath() const;
 	void OnCyberGafferSceneCaptureChanged(const FAssetData& assetData);
-	// void SaveCyberGafferSceneCapturePath();
 
-	TOptional<float> GetLumenCacheResolution() const;
-	void OnLumenCacheResolutionValueChanged(float value);
+	TOptional<float> GetLumenFinalGatherQuality() const;
+	void OnLumenFinalGatherQualityValueChanged(float value);
+	void OnLumenFinalGatherQualityValueCommited(float value, ETextCommit::Type commitType);
 	// CyberGaffer Scene Capture end
 
-	FText GetShadersIncludePath() const;
-	void OnShadersIncludePathCommitted();
+	// FText GetShadersIncludePath() const;
+	// void OnShadersIncludePathCommitted();
 
 	void SaveMaterialChanges(UMaterialInterface* material);
 	void SaveMaterialsChanges(const TArray<UMaterialInterface*>& materials);
 
-	FReply RecompileShaders();
+	// FReply RecompileShaders();
 };

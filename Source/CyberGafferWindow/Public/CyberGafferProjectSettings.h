@@ -20,10 +20,7 @@ public:
 	bool ConfigurePostProcessVolume;
 
 	UPROPERTY(EditAnywhere, Category = "Automation", meta = (DisplayPriority = 1))
-	bool CreateNewLinearPostProcessMaterial;
-
-	UPROPERTY(EditAnywhere, Category = "Automation", meta = (DisplayPriority = 1))
-	bool CreateNewColorGradingPostProcessMaterial;
+	bool CreateNewPostProcessMaterial;
 
 	UPROPERTY(EditAnywhere, Category = "Automation", meta = (DisplayPriority = 1))
 	bool CreateOCIOConfig;
@@ -31,42 +28,39 @@ public:
 	FCyberGafferAutomationSettings() :
 		AddCyberGafferSceneCapture(true),
 		ConfigurePostProcessVolume(true),
-		CreateNewLinearPostProcessMaterial(true),
-		CreateNewColorGradingPostProcessMaterial(true),
+		CreateNewPostProcessMaterial(true),
 		CreateOCIOConfig(true) {}
 	
 	FCyberGafferAutomationSettings(
 		const bool addCyberGafferSceneCapture,
 		const bool configurePostProcessVolume,
-		const bool createNewLinearPostProcessMaterial,
-		const bool createNewColorGradingPostProcessMaterial,
+		const bool createNewPostProcessMaterial,
 		const bool createOCIOConfig) :
 	
 		AddCyberGafferSceneCapture(addCyberGafferSceneCapture),
 		ConfigurePostProcessVolume(configurePostProcessVolume),
-		CreateNewLinearPostProcessMaterial(createNewLinearPostProcessMaterial),
-		CreateNewColorGradingPostProcessMaterial(createNewColorGradingPostProcessMaterial),
+		CreateNewPostProcessMaterial(createNewPostProcessMaterial),
 		CreateOCIOConfig(createOCIOConfig) {}
 };
 
-// If you change this struct, update FCyberGafferSettingsVersion
+// Temporary remove shaders include
+/*
 USTRUCT()
 struct CYBERGAFFERWINDOW_API FCyberGafferShadersConfig {
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, Category = "Shaders")
 	FDirectoryPath ShadersIncludePath;
+	
+	UPROPERTY(EditAnywhere, Category = "Shaders", SaveGame)
+	bool AutoRecompileShadersIfIncludeChange;
 
-	// TODO: Do we really need that?
-	// UPROPERTY(EditAnywhere, Category = "Shaders", SaveGame)
-	// bool AutoRecompileShadersIfIncludeChange;
+	FCyberGafferShadersConfig() : ShadersIncludePath(TEXT("")), AutoRecompileShadersIfIncludeChange(false) {}
 
-	FCyberGafferShadersConfig() : ShadersIncludePath(TEXT(""))/*, AutoRecompileShadersIfIncludeChange(false)*/ {}
-
-	FCyberGafferShadersConfig(const FString& shadersIncludePath/*, const bool autoRecompileShadersIfIncludeChange*/) :
-		ShadersIncludePath(shadersIncludePath)/*,
-		AutoRecompileShadersIfIncludeChange(autoRecompileShadersIfIncludeChange)*/ { }
-};
+	FCyberGafferShadersConfig(const FString& shadersIncludePath, const bool autoRecompileShadersIfIncludeChange) :
+		ShadersIncludePath(shadersIncludePath),
+		AutoRecompileShadersIfIncludeChange(autoRecompileShadersIfIncludeChange) { }
+};*/
 
 // If you change this struct, update FCyberGafferSettingsVersion
 USTRUCT()
@@ -74,33 +68,11 @@ struct CYBERGAFFERWINDOW_API FCyberGafferSceneSettings {
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, Category = "Materials")
-	UMaterialInstance* LinearPostProcessMaterial;
+	UMaterialInstance* PostProcessMaterial;
 
-	UPROPERTY(EditAnywhere, Category = "Materials")
-	UMaterialInstance* ColorGradingPostProcessMaterial;
+	FCyberGafferSceneSettings() : PostProcessMaterial(nullptr) { }
 
-	UPROPERTY(EditAnywhere, Category = "Scene Components")
-	APostProcessVolume* PostProcessVolume;
-
-	UPROPERTY(EditAnywhere, Category = "Scene Components")
-	ACyberGafferSceneCapture* CyberGafferSceneCapture;
-
-	FCyberGafferSceneSettings() :
-		LinearPostProcessMaterial(nullptr),
-		ColorGradingPostProcessMaterial(nullptr),
-		PostProcessVolume(nullptr),
-		CyberGafferSceneCapture(nullptr) { }
-
-	FCyberGafferSceneSettings(
-		UMaterialInstance* linearPostProcessMaterial,
-		UMaterialInstance* colorGradingPostProcessMaterial,
-		APostProcessVolume* postProcessVolume,
-		ACyberGafferSceneCapture* cyberGafferSceneCapture) :
-
-		LinearPostProcessMaterial(linearPostProcessMaterial),
-		ColorGradingPostProcessMaterial(colorGradingPostProcessMaterial),
-		PostProcessVolume(postProcessVolume),
-		CyberGafferSceneCapture(cyberGafferSceneCapture) { }
+	FCyberGafferSceneSettings(UMaterialInstance* linearPostProcessMaterial) : PostProcessMaterial(linearPostProcessMaterial) { }
 };
 
 // If you change this struct, update FCyberGafferSettingsVersion
@@ -112,8 +84,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "CyberGaffer")
 	TMap<FString, FCyberGafferSceneSettings> ScenesSettings;
 
-	UPROPERTY(EditAnywhere, Category = "CyberGaffer")
-	FCyberGafferShadersConfig ShadersConfig;
+	// UPROPERTY(EditAnywhere, Category = "CyberGaffer")
+	// FCyberGafferShadersConfig ShadersConfig;
 
 	TOptional<FCyberGafferSceneSettings*> GetSettingsForScene(const FString& sceneName);
 	TOptional<FCyberGafferSceneSettings*> GetSettingsForCurrentScene();

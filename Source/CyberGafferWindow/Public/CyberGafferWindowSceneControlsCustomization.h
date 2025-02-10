@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "IDetailCustomization.h"
 
+
 class SCyberGafferWindowContent;
 
 class FCyberGafferWindowSceneControlsCustomization : public IDetailCustomization {

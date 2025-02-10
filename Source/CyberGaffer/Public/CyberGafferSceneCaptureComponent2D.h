@@ -28,12 +28,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Server settings")
 	ECyberGafferSuperSampling SuperSampling = ECyberGafferSuperSampling::x64;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post process")
-	APostProcessVolume* GlobalPostProcessVolume;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Post process")
-	UMaterialInterface* ColorGradingPostProcessMaterial;
-	
 	UCyberGafferEngineSubsystem* _subsystem;
 
 private:
