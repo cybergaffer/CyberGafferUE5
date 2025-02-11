@@ -6,6 +6,7 @@
 #include "Widgets/Input/SSlider.h"
 #include "Widgets/Input/SSpinBox.h"
 #include "Widgets/Colors/SColorWheel.h"
+#include "Widgets/Layout/SScaleBox.h"
 
 #define LOCTEXT_NAMESPACE "FCyberGafferWindowModule"
 
@@ -31,18 +32,23 @@ void SCustomColorPicker::Construct(const FArguments& inArgs) {
 		.AutoHeight()
 		.Padding(0.0f, 8.0f, 0.0f, 4.0f)
 		[
-			SNew(SHorizontalBox)
-
-			// Color wheel
-			+SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.HAlign(HAlign_Center)
+			SNew(SScaleBox)
+			.Stretch(EStretch::ScaleToFit)
 			[
 				SNew(SColorWheel)
 				.SelectedColor(this, &SCustomColorPicker::GetCurrentColorHSV)
 				.OnValueChanged(this, &SCustomColorPicker::HandleColorSpectrumValueChanged)
 				.OnMouseCaptureBegin(this, &SCustomColorPicker::HandleInteractiveChangeBegin)
 				.OnMouseCaptureEnd(this, &SCustomColorPicker::HandleInteractiveChangeEnd)
+			]
+			/*SNew(SHorizontalBox)
+
+			// Color wheel
+			+SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			.HAlign(HAlign_Center)
+			[
+				
 			]
 
 			// Saturation slider
@@ -51,7 +57,7 @@ void SCustomColorPicker::Construct(const FArguments& inArgs) {
 			.Padding(4.0f, 0.0f)
 			[
 				MakeColorSlider(EColorPickerChannels::Saturation)
-			]
+			]*/
 		]
 
 		// Red channel slider
@@ -70,9 +76,16 @@ void SCustomColorPicker::Construct(const FArguments& inArgs) {
 
 		// Blue channel slider
 		+SVerticalBox::Slot()
-		.Padding(0.0f, 4.0f, 0.0f, 8.0f)
+		.Padding(0.0f, 4.0f, 0.0f, 4.0f)
 		[
 			MakeColorSpinBox(EColorPickerChannels::Blue)
+		]
+
+		// Saturation slider
+		+SVerticalBox::Slot()
+		.Padding(0.0f, 4.0f, 0.0f, 8.0f)
+		[
+			MakeColorSpinBox(EColorPickerChannels::Saturation)
 		]
 	];
 }
@@ -164,7 +177,7 @@ TSharedRef<SWidget> SCustomColorPicker::MakeColorSpinBox(EColorPickerChannels ch
 		}
 		case EColorPickerChannels::Saturation: {
 			maxValue = 1.0f;
-			sliderLabel = LOCTEXT("SaturationSliderLabel_TEXT", "Saturation");
+			sliderLabel = LOCTEXT("SaturationSliderLabel_TEXT", "S");
 			sliderTooltip  = LOCTEXT("SaturationSliderTooltip_TEXT", "Saturation");
 			break;
 		}
