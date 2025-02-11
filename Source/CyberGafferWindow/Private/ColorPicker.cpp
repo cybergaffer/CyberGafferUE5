@@ -27,7 +27,8 @@ void SCustomColorPicker::Construct(const FArguments& inArgs) {
 	this->ChildSlot
 	[
 		SNew(SVerticalBox)
-		
+
+		// Color wheel
 		+SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(0.0f, 8.0f, 0.0f, 4.0f)
@@ -41,23 +42,13 @@ void SCustomColorPicker::Construct(const FArguments& inArgs) {
 				.OnMouseCaptureBegin(this, &SCustomColorPicker::HandleInteractiveChangeBegin)
 				.OnMouseCaptureEnd(this, &SCustomColorPicker::HandleInteractiveChangeEnd)
 			]
-			/*SNew(SHorizontalBox)
+		]
 
-			// Color wheel
-			+SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.HAlign(HAlign_Center)
-			[
-				
-			]
-
-			// Saturation slider
-			+SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(4.0f, 0.0f)
-			[
-				MakeColorSlider(EColorPickerChannels::Saturation)
-			]*/
+		// Saturation slider
+		+SVerticalBox::Slot()
+		.Padding(0.0f, 4.0f, 0.0f, 16.0f)
+		[
+			MakeColorSpinBox(EColorPickerChannels::Saturation)
 		]
 
 		// Red channel slider
@@ -76,16 +67,9 @@ void SCustomColorPicker::Construct(const FArguments& inArgs) {
 
 		// Blue channel slider
 		+SVerticalBox::Slot()
-		.Padding(0.0f, 4.0f, 0.0f, 4.0f)
-		[
-			MakeColorSpinBox(EColorPickerChannels::Blue)
-		]
-
-		// Saturation slider
-		+SVerticalBox::Slot()
 		.Padding(0.0f, 4.0f, 0.0f, 8.0f)
 		[
-			MakeColorSpinBox(EColorPickerChannels::Saturation)
+			MakeColorSpinBox(EColorPickerChannels::Blue)
 		]
 	];
 }
