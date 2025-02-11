@@ -860,8 +860,9 @@ void SCyberGafferWindowContent::OnLumenFinalGatherQualityValueChanged(float valu
 	if (_cyberGafferSceneCaptureComponent == nullptr) {
 		return;
 	}
+	
 	FProperty* parentProp = FindFProperty<FProperty>(UCyberGafferSceneCaptureComponent2D::StaticClass(), GET_MEMBER_NAME_CHECKED(UCyberGafferSceneCaptureComponent2D, PostProcessSettings));
-	_cyberGafferSceneCaptureComponent->PreEditChange(parentProp);
+	// _cyberGafferSceneCaptureComponent->PreEditChange(parentProp);
 	_cyberGafferSceneCaptureComponent->PostProcessSettings.LumenFinalGatherQuality = value;
 }
 
@@ -885,7 +886,7 @@ void SCyberGafferWindowContent::OnLumenFinalGatherQualityValueCommited(float val
 
 	
 	_cyberGafferSceneCaptureComponent->PostProcessSettings.LumenFinalGatherQuality = value;
-	_cyberGafferSceneCaptureComponent->PostEditChange();
+	// _cyberGafferSceneCaptureComponent->PostEditChange();
 	
 	// _cyberGafferSceneCaptureComponent->PostEditChangeChainProperty(propEvent);
 	GEditor->EndTransaction();
