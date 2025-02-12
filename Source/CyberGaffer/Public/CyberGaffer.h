@@ -17,4 +17,5 @@ public:
 	static FString GetPluginName();
 	static FString GetPluginVersion();
 	static FString GetPluginDirectory();
+	static CYBERGAFFER_API FString GetShaderDirectory();
 };

@@ -10,6 +10,7 @@
 #include "Math/Color.h"
 #include "PrimitiveSceneProxy.h"
 #include "SceneManagement.h"
+#include "Kismet/GameplayStatics.h"
 
 UCyberGafferSceneCaptureComponent2D::UCyberGafferSceneCaptureComponent2D() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -44,17 +45,19 @@ void UCyberGafferSceneCaptureComponent2D::OnComponentCreated() {
 void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings"));
 
-	if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective) {
-		ProjectionType = ECameraProjectionMode::Type::Perspective;
-	}
+	// if(ProjectionType.GetValue() != ECameraProjectionMode::Type::Perspective) {
+	// 	ProjectionType = ECameraProjectionMode::Type::Perspective;
+	// }
 	
-	PostProcessSettings = {};
+	// PostProcessSettings = {};
 
 	PostProcessSettings.bOverride_DynamicGlobalIlluminationMethod = true;
 	PostProcessSettings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Type::Lumen;
 	
 	PostProcessSettings.bOverride_LumenSurfaceCacheResolution = true;
 	PostProcessSettings.LumenSurfaceCacheResolution = 1;
+
+	PostProcessSettings.bOverride_LumenFinalGatherQuality = true;
 
 	PostProcessSettings.bOverride_ReflectionMethod = true;
 	PostProcessSettings.ReflectionMethod = EReflectionMethod::Lumen;
@@ -70,16 +73,30 @@ void UCyberGafferSceneCaptureComponent2D::CheckCaptureSettings() {
 
 void UCyberGafferSceneCaptureComponent2D::UpdateFOV() {
 	AActor* ownerActor = GetOwner();
-	float scale = ownerActor->GetActorScale3D().X;
+	const float scale = ownerActor->GetActorScale3D().X;
 	
-	double distanceToSphere = 300 * scale;
-	double radiusSphere = 5 * scale;
+	const double distanceToSphere = 300 * scale;
+	const double radiusSphere = 5 * scale;
+
+	switch (ProjectionType) {
+		case ECameraProjectionMode::Perspective: {
+			FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
+			break;
+		}
+			
+		case ECameraProjectionMode::Orthographic: {
+			OrthoWidth = radiusSphere * 2.0;
+			break;
+		}
+		default: {
+			CYBERGAFFER_LOG(Error, TEXT("UCyberGafferSceneCaptureComponent2D::UpdateFOV: unknown projection type %i"), ProjectionType);
+			break;
+		};
+	}
 	
-	FOVAngle =  FMath::RadiansToDegrees(2 * asin(radiusSphere/distanceToSphere));
 	bOverride_CustomNearClippingPlane = true;
 	CustomNearClippingPlane = (distanceToSphere - radiusSphere) - 1; //Additional indentation for fixing rendering errors.
 }
-
 
 void UCyberGafferSceneCaptureComponent2D::CheckTextureTarget() {
 	CYBERGAFFERVERB_LOG(Log, TEXT("UCyberGafferSceneCaptureComponent2D::CheckTextureTarget"));
@@ -186,7 +203,7 @@ void UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents(FSceneInter
 	}
 	
 	Super::UpdateSceneCaptureContents(scene);
-
+	
 	if (!FMath::IsPowerOfTwo(TextureTarget->SizeX)) {
 		CYBERGAFFER_LOG(Error, TEXT("UCyberGafferSceneCaptureComponent2D::UpdateSceneCaptureContents: the target cube texture side size must be power of 2. Recommended size: 512 or 1024"));
 		return;

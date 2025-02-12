@@ -5,6 +5,7 @@
 
 #include "CyberGafferEngineSubsystem.h"
 #include "CyberGafferSuperSampling.h"
+#include "Engine/PostProcessVolume.h"
 
 #include "CyberGafferSceneCaptureComponent2D.generated.h"
 
@@ -29,6 +30,7 @@ public:
 	
 	UCyberGafferEngineSubsystem* _subsystem;
 
+private:
 	// Should the cubemap be processed and sent to the CyberGaffer server
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CyberGaffer")
 	//bool ProcessCubeMap = true;
@@ -50,4 +52,7 @@ protected:
 	void CheckCaptureSettings();
 	void UpdateFOV();
 	virtual void BeginPlay() override;
+
+private:
+	APostProcessVolume* FindPostProcessVolume();
 };

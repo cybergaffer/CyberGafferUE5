@@ -33,6 +33,10 @@ FString FCyberGafferModule::GetPluginDirectory() {
 	return IPluginManager::Get().FindPlugin(GetPluginName())->GetBaseDir();
 }
 
+FString FCyberGafferModule::GetShaderDirectory() {
+	return FPaths::Combine(GetPluginDirectory(), TEXT("Shaders"));
+}
+
 #undef LOCTEXT_NAMESPACE
 	
 IMPLEMENT_MODULE(FCyberGafferModule, CyberGaffer)
