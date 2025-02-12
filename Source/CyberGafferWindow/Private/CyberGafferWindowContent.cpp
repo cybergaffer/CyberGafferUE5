@@ -10,6 +10,10 @@
 #include "CyberGafferWindowSceneControlsCustomization.h"
 // #include "CyberGafferWindowShadersConfigCustomization.h"
 
+#include "Editor.h"
+#include "UnrealEdGlobals.h"
+#include "Editor/UnrealEdEngine.h"
+
 #include "IStructureDetailsView.h"
 
 #include "Widgets/Docking/SDockTab.h"
@@ -37,6 +41,7 @@
 #include "Editor/LevelEditor/Public/LevelEditorActions.h"
 #include "AssetToolsModule.h"
 #include "IOpenColorIOModule.h"
+#include "LevelEditorViewport.h"
 
 #include "OpenColorIOConfiguration.h"
 #include "OpenColorIODisplayManager.h"
@@ -242,13 +247,14 @@ FReply SCyberGafferWindowContent::OnExecuteAutomationClicked() {
 			if (world != nullptr) {
 				_postProcessVolume = FindPostProcessVolume(world);
 				if (_postProcessVolume == nullptr) {
-					// TODO: Currently spawn probe in persistent level
-					const FVector location = FVector::ZeroVector;
-					const FRotator rotation = FRotator::ZeroRotator;
-					FActorSpawnParameters params;
-					params.Name = MakeUniqueObjectName(world, APostProcessVolume::StaticClass(), FName(TEXT("CyberGafferPostProcessVolume")));
-					AActor* postProcessVolumeActor = world->SpawnActor(APostProcessVolume::StaticClass(), &location, &rotation, params);
-					_postProcessVolume = Cast<APostProcessVolume>(postProcessVolumeActor);
+					UClass* actorClass = APostProcessVolume::StaticClass();
+					UActorFactory* factory = GEditor->FindActorFactoryForActorClass(actorClass);
+					if (factory != nullptr) {
+						AActor* postProcessVolumeActor = GEditor->UseActorFactory(factory, FAssetData(actorClass), &FTransform::Identity);
+						_postProcessVolume = Cast<APostProcessVolume>(postProcessVolumeActor);
+					} else {
+						CYBERGAFFER_LOG(Error, TEXT("SCyberGafferWindowContent::OnExecuteAutomationClicked: can't find factory for APostProcessVolume"));
+					}
 				}
 			} else {
 				CYBERGAFFER_LOG(Error, TEXT("SCyberGafferWindowContent::OnExecuteAutomationClicked: world is null"));
@@ -270,13 +276,21 @@ FReply SCyberGafferWindowContent::OnExecuteAutomationClicked() {
 			if (world != nullptr) {
 				_cyberGafferSceneCapture = FindCyberGafferSceneCapture(world);
 				if (_cyberGafferSceneCapture == nullptr) {
-					// TODO: Currently spawn probe in persistent level
-					const FVector location = FVector::ZeroVector;
-					const FRotator rotation = FRotator::ZeroRotator;
-					FActorSpawnParameters params;
-					params.Name = MakeUniqueObjectName(world, ACyberGafferSceneCapture::StaticClass(), FName(TEXT("CyberGafferSceneCapture")));
-					CYBERGAFFER_LOG(Log, TEXT("New CGSC name: %s"), *params.Name.ToString());
-					_cyberGafferSceneCapture = Cast<ACyberGafferSceneCapture>(world->SpawnActor(ACyberGafferSceneCapture::StaticClass(), &location, &rotation, params));
+					UClass* actorClass = ACyberGafferSceneCapture::StaticClass();
+					UActorFactory* factory = GEditor->FindActorFactoryForActorClass(actorClass);
+					if (factory != nullptr) {
+						AActor* cyberGafferSceneCaptureActor = GEditor->UseActorFactory(factory, FAssetData(actorClass), &FTransform::Identity);
+						_cyberGafferSceneCapture = Cast<ACyberGafferSceneCapture>(cyberGafferSceneCaptureActor);
+					} else {
+						GUnrealEd->Exec(world, *FString::Printf( TEXT("ACTOR ADD CLASS=%s"), *actorClass->GetName()));
+						_cyberGafferSceneCapture = FindCyberGafferSceneCapture(world);
+						if (_cyberGafferSceneCapture != nullptr && GCurrentLevelEditingViewportClient) {
+							GEditor->MoveActorInFrontOfCamera(*_cyberGafferSceneCapture,
+								GCurrentLevelEditingViewportClient->GetViewLocation(),
+								GCurrentLevelEditingViewportClient->GetViewRotation().Vector()
+							);
+						}
+					}
 				}
 				_cyberGafferSceneCaptureComponent = FindCyberGafferSceneCaptureComponent();
 			} else {
