@@ -345,7 +345,7 @@ FReply SCyberGafferWindowContent::OnExecuteAutomationClicked() {
 			
 			for (int32 i = 0; i < spacesCount; ++i) {
 				FString colorSpaceName = wrapper->GetColorSpaceName(i);
-				CYBERGAFFER_LOG(Warning, TEXT("Color space name: %s"), *colorSpaceName);
+
 				if (colorSpaceName != "Linear" && colorSpaceName != "sRGB") {
 					continue;
 				}
@@ -414,8 +414,6 @@ FReply SCyberGafferWindowContent::OnExecuteAutomationClicked() {
 }
 
 void SCyberGafferWindowContent::LoadSerializedSettings() {
-	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::LoadSerializedSettings"));
-
 	const FString filePath = FPaths::Combine(FPaths::ProjectDir(), TEXT("CyberGafferProjectSettings.data"));
 
 	TArray<uint8> data;
@@ -428,14 +426,14 @@ void SCyberGafferWindowContent::LoadSerializedSettings() {
 	FObjectAndNameAsStringProxyArchive proxyArchive(reader, true);
 	const int32 archiveVersion = proxyArchive.CustomVer(FCyberGafferSettingsVersion::GUID);
 
+	UCyberGafferProjectSettings* settings = NewObject<UCyberGafferProjectSettings>();
+
 	// TODO: If we update settings object structure, implement what should we do with old version
 	if (archiveVersion < FCyberGafferSettingsVersion::LatestVersion) {
 		CYBERGAFFER_LOG(Error, TEXT("SCyberGafferWindowContent::LoadSerializedSettings: Settings for this project have been saved using previous version"));
-		return;
+	} else {
+		settings->Serialize(proxyArchive);
 	}
-	
-	UCyberGafferProjectSettings* settings = NewObject<UCyberGafferProjectSettings>();
-	settings->Serialize(proxyArchive);
 
 	_projectSettings = TStrongObjectPtr<UCyberGafferProjectSettings>(settings);
 
@@ -444,8 +442,6 @@ void SCyberGafferWindowContent::LoadSerializedSettings() {
 }
 
 void SCyberGafferWindowContent::SerializeSettings() {
-	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::SerializeSettings"));
-
 	if (!_projectSettings.IsValid() || _projectSettings.Get() == nullptr) {
 		CYBERGAFFER_LOG(Error, TEXT("SCyberGafferWindowContent::SerializeSettings: settings not valid"));
 	}
@@ -460,8 +456,6 @@ void SCyberGafferWindowContent::SerializeSettings() {
 }
 
 void SCyberGafferWindowContent::OnScenePropertiesChanged(const FPropertyChangedEvent& propertyChangedEvent) {
-	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnScenePropertiesChanged"));
-
 	CastChecked<UScriptStruct>(_currentSceneSettingsUI->GetStruct())->CopyScriptStruct(_currentSceneSettings, _currentSceneSettingsUI->GetStructMemory());
 
 	_postProcessMaterial = _currentSceneSettings->PostProcessMaterial;
@@ -482,8 +476,6 @@ void SCyberGafferWindowContent::OnScenePropertiesChanged(const FPropertyChangedE
 // }
 
 void SCyberGafferWindowContent::OnParentTabClosed(TSharedRef<SDockTab> parentTab) {
-	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::OnParentTabClosed"));
-
 	TSharedPtr<SDockTab> currentTab = _containingTab.Pin();
 	if (currentTab.IsValid()) {
 		if (currentTab == parentTab) {
@@ -509,8 +501,7 @@ UMaterialInstance* SCyberGafferWindowContent::LoadMaterialUsingPath(const FStrin
 		return Cast<UMaterialInstance>(assetData.GetAsset());
 	}
 
-	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::LoadMaterialUsingPath: failed to load asset at path %s"),
-	                *path);
+	CYBERGAFFER_LOG(Log, TEXT("SCyberGafferWindowContent::LoadMaterialUsingPath: failed to load asset at path %s"), *path);
 	return nullptr;
 }
 
@@ -524,9 +515,7 @@ TOptional<FString> SCyberGafferWindowContent::GetCurrentSceneName() {
 	const UPackage* worldPackage = world->GetPackage();
 	const FString worldPackageName = worldPackage->GetName();
 	_isTempScene = FPackageName::IsTempPackage(worldPackageName);
-
-	// FPackageName::Name
-	// CYBERGAFFER_LOG(Warning, TEXT(" SCyberGafferWindowContent::GetCurrentSceneName: outermost file path: %s, temp: %i"), *mapName, isTemp);
+	
 	if (_isTempScene) {
 		if (!_tempSceneSavedDelegateHandle.IsValid()) {
 			_tempSceneSavedDelegateHandle = FEditorDelegates::PostSaveWorldWithContext.AddRaw(
@@ -543,8 +532,6 @@ TOptional<FString> SCyberGafferWindowContent::GetCurrentSceneName() {
 	}
 
 	const auto shortPackageName = FPackageName::GetShortName(worldPackageName);
-	CYBERGAFFER_LOG(Warning, TEXT("SCyberGafferWindowContent::GetCurrentSceneName: package name: %s"),
-	                *shortPackageName);
 
 	return shortPackageName;
 }
@@ -876,7 +863,6 @@ void SCyberGafferWindowContent::OnLumenFinalGatherQualityValueChanged(float valu
 	}
 	
 	FProperty* parentProp = FindFProperty<FProperty>(UCyberGafferSceneCaptureComponent2D::StaticClass(), GET_MEMBER_NAME_CHECKED(UCyberGafferSceneCaptureComponent2D, PostProcessSettings));
-	// _cyberGafferSceneCaptureComponent->PreEditChange(parentProp);
 	_cyberGafferSceneCaptureComponent->PostProcessSettings.LumenFinalGatherQuality = value;
 }
 
@@ -887,22 +873,8 @@ void SCyberGafferWindowContent::OnLumenFinalGatherQualityValueCommited(float val
 	
 	GEditor->BeginTransaction(LOCTEXT("LumenFinalGatherQualityUndo_Text", "Change Lumen Final Gather Quality"));
 	_cyberGafferSceneCaptureComponent->Modify();
-
-	// FEditPropertyChain propertyChain;
 	FProperty* parentProp = FindFProperty<FProperty>(UCyberGafferSceneCaptureComponent2D::StaticClass(), GET_MEMBER_NAME_CHECKED(UCyberGafferSceneCaptureComponent2D, PostProcessSettings));
-	// FProperty* childProp = FindFProperty<FProperty>(FPostProcessSettings::StaticStruct(), GET_MEMBER_NAME_CHECKED(FPostProcessSettings, LumenFinalGatherQuality));
-	//
-	// if (parentProp != nullptr && childProp != nullptr) {
-	// 	propertyChain.AddHead(parentProp);
-	// 	propertyChain.AddTail(childProp);
-	// 	_cyberGafferSceneCaptureComponent->PreEditChange(propertyChain);
-	// }
-
-	
 	_cyberGafferSceneCaptureComponent->PostProcessSettings.LumenFinalGatherQuality = value;
-	// _cyberGafferSceneCaptureComponent->PostEditChange();
-	
-	// _cyberGafferSceneCaptureComponent->PostEditChangeChainProperty(propEvent);
 	GEditor->EndTransaction();
 }
 

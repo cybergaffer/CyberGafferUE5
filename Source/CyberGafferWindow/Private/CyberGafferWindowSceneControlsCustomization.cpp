@@ -90,7 +90,6 @@ void FCyberGafferWindowSceneControlsCustomization::CustomizeDetails(IDetailLayou
 		.Delta(0.01f)
 		.LinearDeltaSensitivity(0.001f)
 		.Value(_content.ToSharedRef(), &SCyberGafferWindowContent::GetLumenFinalGatherQuality)
-		// .OnBeginSliderMovement()
 		.OnValueChanged(_content.ToSharedRef(), &SCyberGafferWindowContent::OnLumenFinalGatherQualityValueChanged)
 		.OnValueCommitted(_content.ToSharedRef(), &SCyberGafferWindowContent::OnLumenFinalGatherQualityValueCommited)
 		.ToolTipText(LOCTEXT("LumenFinalGatherQuality_Text", "Lumen Final Gather Quality"))

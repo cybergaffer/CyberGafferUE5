@@ -366,7 +366,6 @@ void SCustomColorPicker::HandleColorSpinBoxValueChanged(float newValue, EColorPi
 }
 
 bool SCustomColorPicker::SetNewTargetColorRGB(const FLinearColor& newValue, bool forceUpdate) {
-	CYBERGAFFER_LOG(Log, TEXT("SetNewTargetColorRGB: %f, %f, %f"), newValue.R, newValue.G, newValue.B);
 	_currentColorRGB = newValue;
 	_currentColorHSV = newValue.LinearRGBToHSV();
 
@@ -374,7 +373,6 @@ bool SCustomColorPicker::SetNewTargetColorRGB(const FLinearColor& newValue, bool
 }
 
 bool SCustomColorPicker::SetNewTargetColorHSV(const FLinearColor& newValue, bool forceUpdate) {
-	CYBERGAFFER_LOG(Log, TEXT("SetNewTargetColorHSV: %f, %f, %f"), newValue.R, newValue.G, newValue.B);
 	_currentColorRGB = newValue.HSVToLinearRGB();
 	_currentColorHSV = newValue;
 
