@@ -50,6 +50,7 @@
 #include "ScopedTransaction.h"
 
 #include "Engine/PostProcessVolume.h"
+#include "Interfaces/IPluginManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 #include "Serialization/ObjectReader.h"
@@ -230,6 +231,11 @@ void SCyberGafferWindowContent::Construct(const FArguments& args) {
 SCyberGafferWindowContent::~SCyberGafferWindowContent() { }
 
 FReply SCyberGafferWindowContent::OnExecuteAutomationClicked() {
+	if (this->_isTempScene) {
+		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("UnsavedScene_Text", "Current level is temporal, please, save it before running automation"));
+		return FReply::Unhandled();
+	}
+	
 	const FCyberGafferAutomationSettings* automation = _automationSettings->Cast<FCyberGafferAutomationSettings>();
 
 	const bool addCyberGafferSceneCapture = automation->AddCyberGafferSceneCapture;
@@ -325,8 +331,11 @@ FReply SCyberGafferWindowContent::OnExecuteAutomationClicked() {
 			const bool isEnginePlugin = moduleInterface->IsEnginePlugin();
 			
 			FFilePath assetConfigPath;
+			
 			if (isEnginePlugin) {
-				assetConfigPath.FilePath = "{Engine}/Plugins/Marketplace/CyberGaffer/Content/OCIO/OpenColorIO.ocio";
+				const FString pluginPath = IPluginManager::Get().FindPlugin("CyberGaffer")->GetBaseDir();
+				const FString pluginDirectoryName = FPaths::GetPathLeaf(pluginPath);
+				assetConfigPath.FilePath = FString::Format(TEXT("{Engine}/Plugins/Marketplace/{0}/Content/OCIO/OpenColorIO.ocio"), {pluginDirectoryName});
 			} else {
 				assetConfigPath.FilePath = "Plugins/CyberGaffer/Content/OCIO/OpenColorIO.ocio";
 			}
@@ -582,6 +591,11 @@ FReply SCyberGafferWindowContent::CreatePostProcessMaterialInstance() {
 
 	const auto cyberGafferProjectContentDir = FString("/Game/CyberGaffer");
 	const TOptional<FString> sceneName = GetCurrentSceneName();
+	if (!sceneName.IsSet()) {
+		CYBERGAFFER_LOG(Error, TEXT("SCyberGafferWindowContent::CreatePostProcessMaterialInstance: scene name is not set"));
+		return FReply::Unhandled();
+	}
+	
 	const auto newAssetName = FString::Printf(TEXT("%s_%s"), *initialParent->GetName(), *sceneName.GetValue());
 
 	// const FString packagePath = UPackageTools::SanitizePackageName(cyberGafferProjectContentDir + TEXT("/") + newAssetName);

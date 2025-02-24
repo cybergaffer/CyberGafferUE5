@@ -72,16 +72,6 @@ private:
 
 	APostProcessVolume* FindPostProcessVolume(UWorld* world);
 	ACyberGafferSceneCapture* FindCyberGafferSceneCapture(UWorld* world);
-	
-	// void OnLinearPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
-
-	
-	// TWeakObjectPtr<UMaterialInstance> _colorGradingPostProcessMaterial;
-	
-	// FString GetColorGradingPostProcessMaterialPath() const;
-	// void OnColorGradingPostProcessMaterialSelectorValueChanged(const FAssetData& assetData);
-	
-	
 
 public:
 	FReply OnExecuteAutomationClicked();
