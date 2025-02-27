@@ -8,7 +8,7 @@
 	"CreatedBy": "Antilatency LTD.",
 	"CreatedByURL": "https://antilatency.com",
 	"DocsURL": "",
-	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/3b1ffd6c29ea4c17b919907a1a1d81a9",
+	"FabURL": "com.epicgames.launcher://ue/Fab/product/4f2ca7c7-98f3-4d74-bd97-2a50547460c2",
 	"SupportURL": "",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
@@ -19,7 +19,7 @@
 			"Name": "CyberGaffer",
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit",
-			"WhitelistPlatforms": [
+			"PlatformAllowList": [
 				"Win64"
 			]
 		},
@@ -27,7 +27,7 @@
 			"Name": "CyberGafferWindow",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
-			"WhitelistPlatforms": [
+			"PlatformAllowList": [
 				"Win64"
 			]
 		}
